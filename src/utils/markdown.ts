@@ -1,5 +1,29 @@
+export const stripHtml = (html: string): string => {
+  // Remove HTML tags and decode entities
+  return html
+    // Replace <br>, <p>, </p> with newlines for proper text flow
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<p[^>]*>/gi, '')
+    // Remove all other HTML tags
+    .replace(/<[^>]+>/g, '')
+    // Decode common HTML entities
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    // Collapse multiple newlines
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
 export const stripMarkdown = (text: string): string => {
-  return text
+  // First strip HTML if present
+  const htmlStripped = stripHtml(text);
+
+  return htmlStripped
     // Remove headers
     .replace(/^#{1,6}\s+/gm, '')
     // Remove bold/italic
