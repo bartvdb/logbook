@@ -6,6 +6,7 @@ import { MentorChat } from '@/components/mentor';
 import { TagPill } from '@/components/ui';
 import { Mood, MOOD_OPTIONS } from '@/types';
 import { formatDate, formatTime } from '@/utils/date';
+import { sanitizeHTML } from '@/utils/sanitize';
 
 const EntryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -150,7 +151,7 @@ const EntryPage: React.FC = () => {
               {/* Content */}
               <div
                 className="prose prose-slate dark:prose-invert max-w-none p-4"
-                dangerouslySetInnerHTML={{ __html: entry.content }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHTML(entry.content) }}
               />
             </div>
           )}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Entry, MOOD_OPTIONS } from '@/types';
 import { formatRelative, formatDateTime } from '@/utils/date';
 import { truncateText, getFirstLine } from '@/utils/markdown';
+import { sanitizeHTML } from '@/utils/sanitize';
 import { TagPill } from '@/components/ui/TagPill';
 
 interface EntryCardProps {
@@ -86,7 +87,7 @@ export const EntryCard: React.FC<EntryCardProps> = ({
       {showFullContent ? (
         <div
           className="prose prose-slate dark:prose-invert prose-sm max-w-none mb-3"
-          dangerouslySetInnerHTML={{ __html: entry.content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHTML(entry.content) }}
         />
       ) : (
         <p className="text-slate-600 dark:text-slate-300 text-sm line-clamp-3 mb-3">

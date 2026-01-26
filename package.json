@@ -20,6 +20,7 @@
     "@tiptap/starter-kit": "^2.1.13",
     "dexie": "^3.2.4",
     "dexie-react-hooks": "^1.1.6",
+    "dompurify": "^3.3.1",
     "jszip": "^3.10.1",
     "minisearch": "^6.3.0",
     "react": "^18.2.0",
@@ -28,6 +29,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@types/dompurify": "^3.0.5",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@types/uuid": "^9.0.7",
