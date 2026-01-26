@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white;
+    @apply antialiased;
+  }
+
+  /* Safe area padding for mobile devices */
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+@layer components {
+  /* TipTap editor styles */
+  .ProseMirror {
+    @apply min-h-[200px] outline-none;
+  }
+
+  .ProseMirror p.is-editor-empty:first-child::before {
+    @apply text-slate-400 float-left h-0 pointer-events-none;
+    content: attr(data-placeholder);
+  }
+
+  .ProseMirror h1 {
+    @apply text-2xl font-bold mb-4;
+  }
+
+  .ProseMirror h2 {
+    @apply text-xl font-semibold mb-3;
+  }
+
+  .ProseMirror h3 {
+    @apply text-lg font-semibold mb-2;
+  }
+
+  .ProseMirror p {
+    @apply mb-3;
+  }
+
+  .ProseMirror ul,
+  .ProseMirror ol {
+    @apply mb-3 pl-6;
+  }
+
+  .ProseMirror ul {
+    @apply list-disc;
+  }
+
+  .ProseMirror ol {
+    @apply list-decimal;
+  }
+
+  .ProseMirror li {
+    @apply mb-1;
+  }
+
+  .ProseMirror blockquote {
+    @apply border-l-4 border-slate-300 dark:border-slate-600 pl-4 italic text-slate-600 dark:text-slate-400 mb-3;
+  }
+
+  .ProseMirror code {
+    @apply bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+
+  .ProseMirror pre {
+    @apply bg-slate-100 dark:bg-slate-800 p-4 rounded-lg mb-3 overflow-x-auto;
+  }
+
+  .ProseMirror pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .ProseMirror a {
+    @apply text-blue-500 underline;
+  }
+
+  .ProseMirror hr {
+    @apply border-slate-200 dark:border-slate-700 my-6;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Line clamp utilities */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
