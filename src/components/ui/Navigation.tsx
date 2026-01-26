@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { useOnlineStatus, usePWA, useQueueStatus } from '@/hooks';
+import { useOnlineStatus, usePWA, useQueueStatus, useSyncStatus } from '@/hooks';
 
 interface NavItem {
   path: string;
@@ -53,10 +53,74 @@ const navItems: NavItem[] = [
   { path: '/profile', label: 'Profile', icon: <ProfileIcon /> },
 ];
 
+const SyncIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+);
+
+const CheckIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+  </svg>
+);
+
+const CloudOffIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+  </svg>
+);
+
 const StatusIndicator: React.FC = () => {
   const isOnline = useOnlineStatus();
   const { pendingCount } = useQueueStatus();
   const { updateAvailable, update } = usePWA();
+  const { status, forceSync } = useSyncStatus();
+
+  const getSyncStatusDisplay = () => {
+    if (!isOnline) {
+      return {
+        icon: <CloudOffIcon className="w-4 h-4" />,
+        label: 'Offline',
+        color: 'text-slate-500 dark:text-slate-400',
+        bg: 'bg-slate-100 dark:bg-slate-800',
+      };
+    }
+
+    switch (status) {
+      case 'syncing':
+        return {
+          icon: <SyncIcon className="w-4 h-4 animate-spin" />,
+          label: 'Syncing',
+          color: 'text-blue-600 dark:text-blue-400',
+          bg: 'bg-blue-50 dark:bg-blue-900/30',
+        };
+      case 'pending':
+        return {
+          icon: <SyncIcon className="w-4 h-4" />,
+          label: `${pendingCount} pending`,
+          color: 'text-yellow-600 dark:text-yellow-400',
+          bg: 'bg-yellow-50 dark:bg-yellow-900/30',
+        };
+      case 'error':
+        return {
+          icon: <CloudOffIcon className="w-4 h-4" />,
+          label: 'Sync error',
+          color: 'text-red-600 dark:text-red-400',
+          bg: 'bg-red-50 dark:bg-red-900/30',
+        };
+      case 'synced':
+      default:
+        return {
+          icon: <CheckIcon className="w-4 h-4" />,
+          label: 'Synced',
+          color: 'text-green-600 dark:text-green-400',
+          bg: 'bg-green-50 dark:bg-green-900/30',
+        };
+    }
+  };
+
+  const syncStatus = getSyncStatusDisplay();
 
   return (
     <div className="flex items-center gap-2">
@@ -68,17 +132,17 @@ const StatusIndicator: React.FC = () => {
           Update
         </button>
       )}
-      {pendingCount > 0 && (
-        <span className="px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-full">
-          {pendingCount} queued
-        </span>
-      )}
-      <span
-        className={`w-2 h-2 rounded-full ${
-          isOnline ? 'bg-green-500' : 'bg-red-500'
+      <button
+        onClick={forceSync}
+        disabled={!isOnline || status === 'syncing'}
+        className={`flex items-center gap-1.5 px-2 py-1 text-xs rounded-full transition-colors ${syncStatus.bg} ${syncStatus.color} ${
+          isOnline && status !== 'syncing' ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'
         }`}
-        title={isOnline ? 'Online' : 'Offline'}
-      />
+        title={isOnline ? 'Click to sync now' : 'Offline - changes will sync when online'}
+      >
+        {syncStatus.icon}
+        <span className="hidden sm:inline">{syncStatus.label}</span>
+      </button>
     </div>
   );
 };

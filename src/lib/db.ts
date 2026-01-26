@@ -11,12 +11,24 @@ import {
   DEFAULT_SETTINGS,
 } from '@/types';
 
+// Sync queue item for offline operations
+export interface SyncQueueItem {
+  id?: string;
+  operation: 'create' | 'update' | 'delete';
+  table: 'entries' | 'profile' | 'preferences' | 'settings';
+  recordId: string;
+  data?: Record<string, unknown>;
+  createdAt: Date;
+  attempts: number;
+}
+
 export class LogbookDatabase extends Dexie {
   entries!: Table<Entry, string>;
   profile!: Table<Profile, string>;
   preferences!: Table<Preferences, string>;
   settings!: Table<Settings, string>;
   aiQueue!: Table<AIQueueItem, string>;
+  syncQueue!: Table<SyncQueueItem, string>;
 
   constructor() {
     super('logbook-db');
@@ -27,10 +39,54 @@ export class LogbookDatabase extends Dexie {
       settings: 'id',
       aiQueue: 'id, entryId, processed, createdAt',
     });
+    // Add sync queue in version 2
+    this.version(2).stores({
+      entries: 'id, createdAt, updatedAt, *tags, mood',
+      profile: 'id',
+      preferences: 'id',
+      settings: 'id',
+      aiQueue: 'id, entryId, processed, createdAt',
+      syncQueue: 'id, operation, table, recordId, createdAt',
+    });
   }
 }
 
 export const db = new LogbookDatabase();
+
+// Sync queue operations
+export const addToSyncQueue = async (
+  operation: SyncQueueItem['operation'],
+  table: SyncQueueItem['table'],
+  recordId: string,
+  data?: Record<string, unknown>
+): Promise<void> => {
+  const item: SyncQueueItem = {
+    id: uuidv4(),
+    operation,
+    table,
+    recordId,
+    data,
+    createdAt: new Date(),
+    attempts: 0,
+  };
+  await db.syncQueue.add(item);
+};
+
+export const getPendingSyncItems = async (): Promise<SyncQueueItem[]> => {
+  return db.syncQueue.orderBy('createdAt').toArray();
+};
+
+export const removeSyncItem = async (id: string): Promise<void> => {
+  await db.syncQueue.delete(id);
+};
+
+export const incrementSyncAttempts = async (id: string): Promise<void> => {
+  await db.syncQueue.update(id, { attempts: (await db.syncQueue.get(id))?.attempts || 0 + 1 });
+};
+
+export const clearSyncQueue = async (): Promise<void> => {
+  await db.syncQueue.clear();
+};
 
 // Entry operations
 export const createEntry = async (

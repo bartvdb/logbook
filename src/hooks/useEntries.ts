@@ -2,66 +2,96 @@ import { useState, useEffect, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   db,
-  createEntry,
-  updateEntry,
-  deleteEntry,
-  getEntry,
-  getAllEntries,
   getTodayEntries,
   getEntriesForMonth,
   getAllTags,
 } from '@/lib/db';
+import { dataService, getSyncStatus, onSyncStatusChange } from '@/lib/dataService';
 import { searchService } from '@/lib/search';
 import { Entry, SearchFilters, SearchResult } from '@/types';
 
 export const useEntries = () => {
-  const entries = useLiveQuery(() => getAllEntries(), []);
+  const [entries, setEntries] = useState<Entry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [syncStatus, setSyncStatus] = useState(getSyncStatus());
 
+  // Listen for sync status changes
   useEffect(() => {
-    if (entries !== undefined) {
+    return onSyncStatusChange(setSyncStatus);
+  }, []);
+
+  // Fetch entries from data service (cloud-first with local fallback)
+  const fetchEntries = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const allEntries = await dataService.getAllEntries();
+      setEntries(allEntries);
+      searchService.indexEntries(allEntries);
+    } catch (error) {
+      console.error('Error fetching entries:', error);
+    } finally {
       setIsLoading(false);
-      // Index entries for search
-      searchService.indexEntries(entries);
     }
-  }, [entries]);
+  }, []);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchEntries();
+  }, [fetchEntries]);
+
+  // Also listen for local DB changes (for offline updates)
+  const localEntries = useLiveQuery(() => db.entries.orderBy('createdAt').reverse().toArray(), []);
+  useEffect(() => {
+    if (localEntries && !navigator.onLine) {
+      setEntries(localEntries);
+      searchService.indexEntries(localEntries);
+    }
+  }, [localEntries]);
 
   const create = useCallback(
     async (content: string, tags: string[] = [], mood?: Entry['mood']) => {
-      const entry = await createEntry(content, tags, mood);
+      const entry = await dataService.createEntry(content, tags, mood);
       searchService.indexEntry(entry);
+      // Refresh the list
+      await fetchEntries();
       return entry;
     },
-    []
+    [fetchEntries]
   );
 
   const update = useCallback(
     async (id: string, updates: Partial<Omit<Entry, 'id' | 'createdAt'>>) => {
-      await updateEntry(id, updates);
-      const updated = await getEntry(id);
+      await dataService.updateEntry(id, updates);
+      const updated = await dataService.getEntry(id);
       if (updated) {
         searchService.indexEntry(updated);
       }
+      // Refresh the list
+      await fetchEntries();
     },
-    []
+    [fetchEntries]
   );
 
   const remove = useCallback(async (id: string) => {
-    await deleteEntry(id);
+    await dataService.deleteEntry(id);
     searchService.removeEntry(id);
-  }, []);
+    // Refresh the list
+    await fetchEntries();
+  }, [fetchEntries]);
 
   const get = useCallback(async (id: string) => {
-    return getEntry(id);
+    return dataService.getEntry(id);
   }, []);
 
   return {
-    entries: entries || [],
+    entries,
     isLoading,
+    syncStatus,
     create,
     update,
     remove,
     get,
+    refresh: fetchEntries,
   };
 };
 
@@ -101,14 +131,46 @@ export const useMonthEntries = (year: number, month: number) => {
 };
 
 export const useEntry = (id: string | undefined) => {
-  const entry = useLiveQuery(
+  const [entry, setEntry] = useState<Entry | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(!!id);
+
+  useEffect(() => {
+    if (!id) {
+      setEntry(undefined);
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchEntry = async () => {
+      setIsLoading(true);
+      try {
+        const result = await dataService.getEntry(id);
+        setEntry(result);
+      } catch (error) {
+        console.error('Error fetching entry:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEntry();
+  }, [id]);
+
+  // Also listen for local changes
+  const localEntry = useLiveQuery(
     () => (id ? db.entries.get(id) : undefined),
     [id]
   );
 
+  useEffect(() => {
+    if (localEntry && !navigator.onLine) {
+      setEntry(localEntry);
+    }
+  }, [localEntry]);
+
   return {
     entry,
-    isLoading: entry === undefined && !!id,
+    isLoading,
   };
 };
 
@@ -174,8 +236,8 @@ export const useAutoSave = (
     const timeoutId = setTimeout(async () => {
       setIsSaving(true);
       try {
-        await updateEntry(entryId, { content, tags, mood });
-        const updated = await getEntry(entryId);
+        await dataService.updateEntry(entryId, { content, tags, mood });
+        const updated = await dataService.getEntry(entryId);
         if (updated) {
           searchService.indexEntry(updated);
         }

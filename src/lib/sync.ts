@@ -1,20 +1,26 @@
-import { getPendingAIRequests } from './db';
+import { getPendingAIRequests, getPendingSyncItems } from './db';
 import { processAIQueue } from './ai';
+import { processSyncQueue, syncFromCloud, getSyncStatus, onSyncStatusChange } from './dataService';
+import { isSupabaseConfigured } from './supabase';
 
 type OnlineCallback = () => void;
 type OfflineCallback = () => void;
 type QueueProcessedCallback = (count: number) => void;
+type SyncStatusCallback = (status: string) => void;
 
 class SyncService {
   private isOnline: boolean;
   private onlineCallbacks: OnlineCallback[] = [];
   private offlineCallbacks: OfflineCallback[] = [];
   private queueProcessedCallbacks: QueueProcessedCallback[] = [];
+  private syncStatusCallbacks: SyncStatusCallback[] = [];
   private processingQueue = false;
+  private initialSyncDone = false;
 
   constructor() {
     this.isOnline = navigator.onLine;
     this.setupListeners();
+    this.setupSyncStatusListener();
   }
 
   private setupListeners(): void {
@@ -22,6 +28,7 @@ class SyncService {
       this.isOnline = true;
       this.onlineCallbacks.forEach((cb) => cb());
       this.processQueue();
+      this.syncData(); // Sync when coming online
     });
 
     window.addEventListener('offline', () => {
@@ -30,8 +37,19 @@ class SyncService {
     });
   }
 
+  private setupSyncStatusListener(): void {
+    onSyncStatusChange((status) => {
+      this.syncStatusCallbacks.forEach((cb) => cb(status));
+    });
+  }
+
   getOnlineStatus(): boolean {
     return this.isOnline;
+  }
+
+  getSyncStatus(): string {
+    if (!this.isOnline) return 'offline';
+    return getSyncStatus();
   }
 
   onOnline(callback: OnlineCallback): () => void {
@@ -57,15 +75,31 @@ class SyncService {
     };
   }
 
+  onSyncStatusChange(callback: SyncStatusCallback): () => void {
+    this.syncStatusCallbacks.push(callback);
+    return () => {
+      this.syncStatusCallbacks = this.syncStatusCallbacks.filter((cb) => cb !== callback);
+    };
+  }
+
   async processQueue(): Promise<void> {
     if (!this.isOnline || this.processingQueue) return;
 
     this.processingQueue = true;
 
     try {
-      const processed = await processAIQueue();
-      if (processed > 0) {
-        this.queueProcessedCallbacks.forEach((cb) => cb(processed));
+      // Process AI queue
+      const aiProcessed = await processAIQueue();
+      if (aiProcessed > 0) {
+        this.queueProcessedCallbacks.forEach((cb) => cb(aiProcessed));
+      }
+
+      // Process data sync queue
+      if (isSupabaseConfigured()) {
+        const dataProcessed = await processSyncQueue();
+        if (dataProcessed > 0) {
+          this.queueProcessedCallbacks.forEach((cb) => cb(dataProcessed));
+        }
       }
     } catch (error) {
       console.error('Error processing queue:', error);
@@ -74,13 +108,50 @@ class SyncService {
     }
   }
 
+  async syncData(): Promise<void> {
+    if (!this.isOnline || !isSupabaseConfigured()) return;
+
+    try {
+      // First, push any pending local changes
+      await processSyncQueue();
+
+      // Then, if this is the first sync, pull from cloud
+      if (!this.initialSyncDone) {
+        await syncFromCloud();
+        this.initialSyncDone = true;
+      }
+    } catch (error) {
+      console.error('Error syncing data:', error);
+    }
+  }
+
+  async forceSync(): Promise<void> {
+    if (!this.isOnline || !isSupabaseConfigured()) return;
+
+    try {
+      await processSyncQueue();
+      await syncFromCloud();
+    } catch (error) {
+      console.error('Error in force sync:', error);
+      throw error;
+    }
+  }
+
   async getPendingCount(): Promise<number> {
-    const pending = await getPendingAIRequests();
-    return pending.length;
+    const [aiPending, syncPending] = await Promise.all([
+      getPendingAIRequests(),
+      getPendingSyncItems(),
+    ]);
+    return aiPending.length + syncPending.length;
   }
 
   // Try to process queue periodically when online
   startBackgroundSync(intervalMs = 60000): () => void {
+    // Do initial sync on start
+    if (this.isOnline && isSupabaseConfigured()) {
+      this.syncData();
+    }
+
     const interval = setInterval(() => {
       if (this.isOnline) {
         this.processQueue();

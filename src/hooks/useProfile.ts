@@ -1,11 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import {
-  db,
-  updateProfile,
-  updatePreferences,
-  updateSettings,
-} from '@/lib/db';
+import { db } from '@/lib/db';
+import { dataService } from '@/lib/dataService';
 import {
   Profile,
   Preferences,
@@ -16,21 +12,44 @@ import {
 } from '@/types';
 
 export const useProfile = () => {
-  const result = useLiveQuery(
+  const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchProfile = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await dataService.getProfile();
+      setProfile(result);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  // Listen for local changes (for offline mode)
+  const localProfile = useLiveQuery(
     async () => {
-      const profile = await db.profile.get('user-profile');
-      return profile ?? null;
+      const p = await db.profile.get('user-profile');
+      return p ?? null;
     },
     []
   );
 
-  const update = useCallback(async (updates: Partial<Omit<Profile, 'id'>>) => {
-    await updateProfile(updates);
-  }, []);
+  useEffect(() => {
+    if (localProfile && !navigator.onLine) {
+      setProfile(localProfile);
+    }
+  }, [localProfile]);
 
-  // useLiveQuery returns undefined while loading
-  const isLoading = result === undefined;
-  const profile = isLoading || result === null ? DEFAULT_PROFILE : result;
+  const update = useCallback(async (updates: Partial<Omit<Profile, 'id'>>) => {
+    await dataService.updateProfile(updates);
+    await fetchProfile();
+  }, [fetchProfile]);
 
   return {
     profile,
@@ -40,21 +59,44 @@ export const useProfile = () => {
 };
 
 export const usePreferences = () => {
-  const result = useLiveQuery(
+  const [preferences, setPreferences] = useState<Preferences>(DEFAULT_PREFERENCES);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchPreferences = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await dataService.getPreferences();
+      setPreferences(result);
+    } catch (error) {
+      console.error('Error fetching preferences:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPreferences();
+  }, [fetchPreferences]);
+
+  // Listen for local changes (for offline mode)
+  const localPreferences = useLiveQuery(
     async () => {
-      const preferences = await db.preferences.get('user-preferences');
-      return preferences ?? null;
+      const p = await db.preferences.get('user-preferences');
+      return p ?? null;
     },
     []
   );
 
-  const update = useCallback(async (updates: Partial<Omit<Preferences, 'id'>>) => {
-    await updatePreferences(updates);
-  }, []);
+  useEffect(() => {
+    if (localPreferences && !navigator.onLine) {
+      setPreferences(localPreferences);
+    }
+  }, [localPreferences]);
 
-  // useLiveQuery returns undefined while loading
-  const isLoading = result === undefined;
-  const preferences = isLoading || result === null ? DEFAULT_PREFERENCES : result;
+  const update = useCallback(async (updates: Partial<Omit<Preferences, 'id'>>) => {
+    await dataService.updatePreferences(updates);
+    await fetchPreferences();
+  }, [fetchPreferences]);
 
   return {
     preferences,
@@ -64,21 +106,44 @@ export const usePreferences = () => {
 };
 
 export const useSettings = () => {
-  const result = useLiveQuery(
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchSettings = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await dataService.getSettings();
+      setSettings(result);
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  // Listen for local changes (for offline mode)
+  const localSettings = useLiveQuery(
     async () => {
-      const settings = await db.settings.get('app-settings');
-      return settings ?? null;
+      const s = await db.settings.get('app-settings');
+      return s ?? null;
     },
     []
   );
 
-  const update = useCallback(async (updates: Partial<Omit<Settings, 'id'>>) => {
-    await updateSettings(updates);
-  }, []);
+  useEffect(() => {
+    if (localSettings && !navigator.onLine) {
+      setSettings(localSettings);
+    }
+  }, [localSettings]);
 
-  // useLiveQuery returns undefined while loading
-  const isLoading = result === undefined;
-  const settings = isLoading || result === null ? DEFAULT_SETTINGS : result;
+  const update = useCallback(async (updates: Partial<Omit<Settings, 'id'>>) => {
+    await dataService.updateSettings(updates);
+    await fetchSettings();
+  }, [fetchSettings]);
 
   return {
     settings,

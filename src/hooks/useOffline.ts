@@ -128,3 +128,24 @@ export const useBackgroundSync = () => {
     };
   }, []);
 };
+
+export const useSyncStatus = () => {
+  const [status, setStatus] = useState(syncService.getSyncStatus());
+
+  useEffect(() => {
+    const unsubscribe = syncService.onSyncStatusChange(setStatus);
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  const forceSync = useCallback(async () => {
+    try {
+      await syncService.forceSync();
+    } catch (error) {
+      console.error('Force sync failed:', error);
+    }
+  }, []);
+
+  return { status, forceSync };
+};
