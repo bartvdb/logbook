@@ -28,22 +28,8 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const today = new Date();
-  const formattedDate = today.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
-
   return (
     <div className="flex flex-col h-full">
-      {/* Date header */}
-      <div className="text-center py-4">
-        <p className="text-sm text-neutral-600 dark:text-neutral-300 uppercase tracking-wider">
-          {formattedDate}
-        </p>
-      </div>
-
       {/* Full-height editor */}
       <div className="flex-1 flex flex-col">
         <textarea

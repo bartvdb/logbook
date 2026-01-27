@@ -51,6 +51,14 @@ const CloseIcon = () => (
   </svg>
 );
 
+const getFormattedDate = () => {
+  const today = new Date();
+  return today.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
 const navItems: NavItem[] = [
   { path: '/', label: 'Today', icon: <HomeIcon /> },
   { path: '/entries', label: 'Entries', icon: <EntriesIcon /> },
@@ -138,6 +146,11 @@ export const Navigation: React.FC<NavigationProps> = ({ isCollapsed = false, onT
               >
                 {item.icon}
                 <span>{item.label}</span>
+                {item.path === '/' && (
+                  <span className="ml-auto text-xs text-neutral-400 dark:text-neutral-500">
+                    {getFormattedDate()}
+                  </span>
+                )}
               </NavLink>
             ))}
           </nav>
