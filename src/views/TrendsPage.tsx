@@ -1,16 +1,8 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useEntries } from '@/hooks';
 import { Entry } from '@/types';
 import { stripHtml } from '@/utils/markdown';
 import { formatDate } from '@/utils/date';
-
-interface DaySummary {
-  date: string;
-  entries: Entry[];
-  summary?: string;
-  isLoading?: boolean;
-  isExpanded?: boolean;
-}
 
 const TrendsPage: React.FC = () => {
   const { entries, isLoading } = useEntries();
