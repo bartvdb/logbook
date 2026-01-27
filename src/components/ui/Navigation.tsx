@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useOnlineStatus, useSyncStatus } from '@/hooks';
 
@@ -20,6 +20,12 @@ const EntriesIcon = () => (
   </svg>
 );
 
+const TrendsIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
+  </svg>
+);
+
 const ProfileIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
@@ -33,9 +39,22 @@ const SettingsIcon = () => (
   </svg>
 );
 
+const MenuIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
+
 const navItems: NavItem[] = [
   { path: '/', label: 'Today', icon: <HomeIcon /> },
   { path: '/entries', label: 'Entries', icon: <EntriesIcon /> },
+  { path: '/trends', label: 'Trends', icon: <TrendsIcon /> },
   { path: '/profile', label: 'Profile', icon: <ProfileIcon /> },
 ];
 
@@ -59,19 +78,50 @@ const SyncDot: React.FC = () => {
   }
 };
 
-export const Navigation: React.FC = () => {
+interface NavigationProps {
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+}
+
+export const Navigation: React.FC<NavigationProps> = ({ isCollapsed = false, onToggleCollapse }) => {
   const location = useLocation();
+
+  // Keyboard shortcut to toggle sidebar (Cmd/Ctrl + \)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === '\\') {
+        e.preventDefault();
+        onToggleCollapse?.();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onToggleCollapse]);
 
   return (
     <>
-      {/* Desktop Sidebar - minimal */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-56 lg:fixed lg:inset-y-0 bg-white dark:bg-neutral-950 border-r border-neutral-100 dark:border-neutral-900">
+      {/* Desktop Sidebar */}
+      <aside
+        className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 bg-white dark:bg-neutral-950 border-r border-neutral-100 dark:border-neutral-900 transition-all duration-200 ${
+          isCollapsed ? 'lg:w-0 lg:overflow-hidden lg:border-r-0' : 'lg:w-56'
+        }`}
+      >
         <div className="flex flex-col flex-1 min-h-0">
-          <div className="flex items-center gap-2 h-14 px-5">
-            <h1 className="text-base font-medium text-neutral-900 dark:text-white">
-              Logbook
-            </h1>
-            <SyncDot />
+          <div className="flex items-center justify-between h-14 px-5">
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-medium text-neutral-900 dark:text-white">
+                Logbook
+              </h1>
+              <SyncDot />
+            </div>
+            <button
+              onClick={onToggleCollapse}
+              className="p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+              title="Hide sidebar (⌘\)"
+            >
+              <CloseIcon />
+            </button>
           </div>
           <nav className="flex-1 px-3 py-2 space-y-0.5">
             {navItems.map((item) => (
@@ -82,7 +132,7 @@ export const Navigation: React.FC = () => {
                   `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
                     isActive
                       ? 'bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-white'
-                      : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                      : 'text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white'
                   }`
                 }
               >
@@ -98,7 +148,7 @@ export const Navigation: React.FC = () => {
                 `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
                   isActive
                     ? 'bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-white'
-                    : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                    : 'text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white'
                 }`
               }
             >
@@ -109,7 +159,18 @@ export const Navigation: React.FC = () => {
         </div>
       </aside>
 
-      {/* Mobile Header - minimal */}
+      {/* Desktop collapsed toggle button */}
+      {isCollapsed && (
+        <button
+          onClick={onToggleCollapse}
+          className="hidden lg:flex fixed top-4 left-4 z-50 p-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 bg-white dark:bg-neutral-950 rounded-lg border border-neutral-100 dark:border-neutral-900 transition-colors"
+          title="Show sidebar (⌘\)"
+        >
+          <MenuIcon />
+        </button>
+      )}
+
+      {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-sm border-b border-neutral-100 dark:border-neutral-900">
         <div className="flex items-center justify-center h-12 px-4 relative">
           <h1 className="text-sm font-medium text-neutral-900 dark:text-white">
@@ -121,7 +182,7 @@ export const Navigation: React.FC = () => {
         </div>
       </header>
 
-      {/* Mobile Bottom Navigation - minimal */}
+      {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-sm border-t border-neutral-100 dark:border-neutral-900 safe-area-inset-bottom">
         <div className="flex items-center justify-around h-14">
           {navItems.map((item) => (
@@ -132,7 +193,7 @@ export const Navigation: React.FC = () => {
                 `flex flex-col items-center justify-center flex-1 h-full transition-colors ${
                   isActive
                     ? 'text-neutral-900 dark:text-white'
-                    : 'text-neutral-400 dark:text-neutral-500'
+                    : 'text-neutral-600 dark:text-neutral-400'
                 }`
               }
             >

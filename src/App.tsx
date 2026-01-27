@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Navigation } from '@/components/ui';
 import { useTheme, useBackgroundSync } from '@/hooks';
@@ -10,6 +10,7 @@ import ProfilePage from '@/views/ProfilePage';
 import SettingsPage from '@/views/SettingsPage';
 import EntryPage from '@/views/EntryPage';
 import NewEntryPage from '@/views/NewEntryPage';
+import TrendsPage from '@/views/TrendsPage';
 import DesignSystemPage from '@/views/DesignSystemPage';
 
 const App: React.FC = () => {
@@ -18,6 +19,20 @@ const App: React.FC = () => {
 
   // Start background sync for AI queue
   useBackgroundSync();
+
+  // Sidebar collapse state
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar-collapsed');
+    return saved === 'true';
+  });
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(prev => {
+      const newValue = !prev;
+      localStorage.setItem('sidebar-collapsed', String(newValue));
+      return newValue;
+    });
+  };
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -40,14 +55,17 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-950">
-      <Navigation />
+      <Navigation isCollapsed={isSidebarCollapsed} onToggleCollapse={toggleSidebar} />
 
       {/* Main content */}
-      <main className="lg:ml-56 pt-12 pb-16 lg:pt-0 lg:pb-0">
+      <main className={`pt-12 pb-16 lg:pt-0 lg:pb-0 transition-all duration-200 ${
+        isSidebarCollapsed ? 'lg:ml-0' : 'lg:ml-56'
+      }`}>
         <div className="max-w-2xl mx-auto px-4 py-8 lg:py-12">
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/entries" element={<EntriesPage />} />
+            <Route path="/trends" element={<TrendsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/entry/:id" element={<EntryPage />} />

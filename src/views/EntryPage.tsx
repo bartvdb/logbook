@@ -108,7 +108,7 @@ const EntryPage: React.FC = () => {
       <div className="space-y-4">
         {/* Date and time */}
         <div>
-          <p className="text-xs text-neutral-400 dark:text-neutral-600">
+          <p className="text-sm text-neutral-600 dark:text-neutral-300">
             {formattedDate} · {formatTime(entry.createdAt)}
           </p>
         </div>
@@ -121,19 +121,19 @@ const EntryPage: React.FC = () => {
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full bg-transparent text-neutral-900 dark:text-white text-lg leading-relaxed resize-none focus:outline-none"
+              className="w-full bg-transparent text-neutral-900 dark:text-white text-xl leading-relaxed resize-none focus:outline-none"
               rows={5}
             />
             <div className="flex items-center gap-4">
               <button
                 onClick={handleSave}
-                className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors"
+                className="text-base text-neutral-700 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white transition-colors"
               >
                 Save
               </button>
               <button
                 onClick={() => setIsEditing(false)}
-                className="text-sm text-neutral-400 hover:text-neutral-600 transition-colors"
+                className="text-base text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
               >
                 Cancel
               </button>
@@ -142,7 +142,7 @@ const EntryPage: React.FC = () => {
         ) : (
           <div
             onClick={() => setIsEditing(true)}
-            className="prose prose-neutral dark:prose-invert max-w-none cursor-text prose-p:text-neutral-700 dark:prose-p:text-neutral-300 prose-p:leading-relaxed prose-headings:text-neutral-900 dark:prose-headings:text-white"
+            className="prose prose-lg prose-neutral dark:prose-invert max-w-none cursor-text prose-p:text-neutral-800 dark:prose-p:text-neutral-200 prose-p:leading-relaxed prose-headings:text-neutral-900 dark:prose-headings:text-white"
             dangerouslySetInnerHTML={{ __html: sanitizeHTML(entry.content) }}
           />
         )}
@@ -152,13 +152,13 @@ const EntryPage: React.FC = () => {
           <div className="flex items-center gap-4 pt-4">
             <button
               onClick={() => setIsEditing(true)}
-              className="text-sm text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+              className="text-base text-neutral-600 hover:text-neutral-800 dark:text-neutral-300 dark:hover:text-neutral-100 transition-colors"
             >
               Edit
             </button>
             <button
               onClick={handleDelete}
-              className="text-sm text-neutral-400 hover:text-red-500 transition-colors"
+              className="text-base text-neutral-600 hover:text-red-500 dark:text-neutral-300 dark:hover:text-red-400 transition-colors"
             >
               Delete
             </button>

@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTodayEntries, useEntries } from '@/hooks';
 import { stripHtml } from '@/utils/markdown';
+import { SwipeToDelete } from '@/components/ui';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -40,8 +41,8 @@ const HomePage: React.FC = () => {
   };
 
   const handleDelete = useCallback(
-    async (id: string) => {
-      if (window.confirm('Delete this entry?')) {
+    async (id: string, skipConfirm = false) => {
+      if (skipConfirm || window.confirm('Delete this entry?')) {
         await remove(id);
         refresh();
       }
@@ -66,7 +67,7 @@ const HomePage: React.FC = () => {
     <div className="space-y-12">
       {/* Date header */}
       <div className="text-center">
-        <p className="text-xs text-neutral-400 dark:text-neutral-600 uppercase tracking-wider">
+        <p className="text-sm text-neutral-600 dark:text-neutral-300 uppercase tracking-wider">
           {formattedDate}
         </p>
       </div>
@@ -79,17 +80,17 @@ const HomePage: React.FC = () => {
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Start writing..."
-          className="w-full bg-transparent text-neutral-900 dark:text-white placeholder-neutral-300 dark:placeholder-neutral-700 text-lg leading-relaxed resize-none focus:outline-none"
+          className="w-full bg-transparent text-neutral-900 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 text-xl leading-relaxed resize-none focus:outline-none"
           rows={1}
         />
         {content.trim() && (
           <div className="flex items-center justify-between mt-6 pt-4 border-t border-neutral-100 dark:border-neutral-900">
-            <p className="text-xs text-neutral-400 dark:text-neutral-600">
+            <p className="text-sm text-neutral-600 dark:text-neutral-300">
               {content.trim().split(/\s+/).length} words
             </p>
             <button
               onClick={handleSave}
-              className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors"
+              className="text-base text-neutral-700 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white transition-colors"
             >
               Save
             </button>
@@ -100,31 +101,35 @@ const HomePage: React.FC = () => {
       {/* Today's entries */}
       {todayEntries.length > 0 && (
         <div className="border-t border-neutral-100 dark:border-neutral-900 pt-8">
-          <p className="text-xs text-neutral-400 dark:text-neutral-600 mb-4">
+          <p className="text-sm text-neutral-600 dark:text-neutral-300 mb-4">
             Today
           </p>
-          <div className="space-y-1">
+          <div className="space-y-1 -mx-2">
             {todayEntries.map(entry => (
-              <div
+              <SwipeToDelete
                 key={entry.id}
-                onClick={() => navigate(`/entry/${entry.id}`)}
-                className="group flex items-center justify-between py-2 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900 -mx-2 px-2 rounded transition-colors"
+                onDelete={() => entry.id && handleDelete(entry.id, true)}
               >
-                <span className="text-sm text-neutral-700 dark:text-neutral-300 truncate">
-                  {getTitle(entry.content)}
-                </span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    entry.id && handleDelete(entry.id);
-                  }}
-                  className="text-neutral-300 dark:text-neutral-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                <div
+                  onClick={() => navigate(`/entry/${entry.id}`)}
+                  className="group flex items-center justify-between py-2 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900 px-2 rounded transition-colors"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+                  <span className="text-base text-neutral-800 dark:text-neutral-200 truncate">
+                    {getTitle(entry.content)}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      entry.id && handleDelete(entry.id);
+                    }}
+                    className="text-neutral-300 dark:text-neutral-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 hidden lg:block"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </SwipeToDelete>
             ))}
           </div>
         </div>

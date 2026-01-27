@@ -4,6 +4,7 @@ import { useEntries } from '@/hooks';
 import { Entry } from '@/types';
 import { stripHtml } from '@/utils/markdown';
 import { formatDate } from '@/utils/date';
+import { SwipeToDelete } from '@/components/ui';
 
 const EntriesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -11,9 +12,9 @@ const EntriesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleDelete = useCallback(
-    async (id: string, e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (window.confirm('Delete this entry?')) {
+    async (id: string, e?: React.MouseEvent, skipConfirm = false) => {
+      if (e) e.stopPropagation();
+      if (skipConfirm || window.confirm('Delete this entry?')) {
         await remove(id);
       }
     },
@@ -70,45 +71,60 @@ const EntriesPage: React.FC = () => {
       </h1>
 
       {/* Search */}
-      <input
-        type="text"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search..."
-        className="w-full py-2 bg-transparent text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 border-b border-neutral-200 dark:border-neutral-800 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-colors"
-      />
+      <div className="relative">
+        <svg
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search"
+          className="w-full py-2 pl-6 bg-transparent text-base text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none"
+        />
+      </div>
 
       {/* Entry list */}
       {filteredEntries.length === 0 ? (
-        <p className="text-neutral-400 dark:text-neutral-600 text-sm">
+        <p className="text-neutral-600 dark:text-neutral-300 text-base">
           {searchQuery ? 'No entries found.' : 'No entries yet.'}
         </p>
       ) : (
         <div className="space-y-10">
           {groupedEntries.map(([date, dateEntries]) => (
             <div key={date}>
-              <p className="text-xs text-neutral-400 dark:text-neutral-600 mb-4">
+              <p className="text-sm text-neutral-600 dark:text-neutral-300 mb-4">
                 {date}
               </p>
-              <div className="space-y-1">
+              <div className="space-y-1 -mx-2">
                 {dateEntries.map(entry => (
-                  <div
+                  <SwipeToDelete
                     key={entry.id}
-                    onClick={() => navigate(`/entry/${entry.id}`)}
-                    className="group flex items-center justify-between py-2 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900 -mx-2 px-2 rounded transition-colors"
+                    onDelete={() => entry.id && handleDelete(entry.id, undefined, true)}
                   >
-                    <span className="text-sm text-neutral-700 dark:text-neutral-300 truncate">
-                      {getTitle(entry.content)}
-                    </span>
-                    <button
-                      onClick={(e) => entry.id && handleDelete(entry.id, e)}
-                      className="text-neutral-300 dark:text-neutral-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                    <div
+                      onClick={() => navigate(`/entry/${entry.id}`)}
+                      className="group flex items-center justify-between py-2 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900 px-2 rounded transition-colors"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
+                      <span className="text-base text-neutral-800 dark:text-neutral-200 truncate">
+                        {getTitle(entry.content)}
+                      </span>
+                      <button
+                        onClick={(e) => entry.id && handleDelete(entry.id, e)}
+                        className="text-neutral-300 dark:text-neutral-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 hidden lg:block"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </SwipeToDelete>
                 ))}
               </div>
             </div>
