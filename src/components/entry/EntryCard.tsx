@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Entry } from '@/types';
-import { getFirstLine, truncateText } from '@/utils/markdown';
+import { truncateText } from '@/utils/markdown';
+import { yooptaContentToText, isYooptaContent } from '@/components/editor';
+import { stripHtml } from '@/utils/markdown';
 
 interface EntryCardProps {
   entry: Entry;
@@ -27,10 +29,34 @@ export const EntryCard: React.FC<EntryCardProps> = ({
     }
   };
 
-  const title = getFirstLine(entry.content);
-  // Get second line as subtitle/preview
-  const lines = entry.content.split('\n').filter(l => l.trim());
-  const subtitle = lines.length > 1 ? truncateText(lines.slice(1).join(' '), 100) : '';
+  // Extract plain text from content based on version
+  const { title, subtitle } = useMemo(() => {
+    let plainText = '';
+
+    if (entry.contentVersion === 2) {
+      // Yoopta JSON format
+      try {
+        const parsed = JSON.parse(entry.content);
+        if (isYooptaContent(parsed)) {
+          plainText = yooptaContentToText(parsed);
+        } else {
+          plainText = entry.content;
+        }
+      } catch {
+        plainText = entry.content;
+      }
+    } else {
+      // Legacy format - strip HTML
+      plainText = stripHtml(entry.content);
+    }
+
+    // Get first line as title, rest as subtitle
+    const lines = plainText.split('\n').filter(l => l.trim());
+    const title = lines[0] ? truncateText(lines[0], 80) : 'Untitled';
+    const subtitle = lines.length > 1 ? truncateText(lines.slice(1).join(' '), 100) : '';
+
+    return { title, subtitle };
+  }, [entry.content, entry.contentVersion]);
 
   return (
     <article

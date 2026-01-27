@@ -1,60 +1,59 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { YooptaContentValue } from '@yoopta/editor';
 import { useEntries } from '@/hooks';
+import { LogbookEditor, createEmptyDocument, yooptaContentToText } from '@/components/editor';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { create } = useEntries();
-  const [content, setContent] = useState('');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [content, setContent] = useState<YooptaContentValue>(createEmptyDocument());
 
-  // Focus on mount
-  useEffect(() => {
-    textareaRef.current?.focus();
-  }, []);
+  // Check if content has any actual text
+  const hasContent = useMemo(() => {
+    const text = yooptaContentToText(content);
+    return text.trim().length > 0;
+  }, [content]);
 
-  // Auto-resize textarea and keep it vertically centered on desktop
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-    }
+  // Word count
+  const wordCount = useMemo(() => {
+    const text = yooptaContentToText(content);
+    if (!text.trim()) return 0;
+    return text.trim().split(/\s+/).length;
   }, [content]);
 
   const handleSave = useCallback(async () => {
-    if (!content.trim()) return;
-    const entry = await create(content, [], undefined);
-    setContent('');
+    if (!hasContent) return;
+    // Save as Yoopta JSON with version 2
+    const entry = await create(JSON.stringify(content), [], undefined, 2);
+    setContent(createEmptyDocument());
     navigate(`/entry/${entry.id}`);
-  }, [content, create, navigate]);
+  }, [content, hasContent, create, navigate]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     // Cmd/Ctrl + Enter to save
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
       handleSave();
     }
-  };
+  }, [handleSave]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" onKeyDown={handleKeyDown}>
       {/* Desktop: centered layout, Mobile: top-aligned */}
       <div className="flex-1 flex flex-col lg:justify-center">
         <div className="lg:max-h-[80vh] lg:overflow-auto">
-          <textarea
-            ref={textareaRef}
+          <LogbookEditor
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onChange={setContent}
             placeholder="Start writing..."
-            className="w-full bg-transparent text-neutral-900 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 text-xl leading-relaxed resize-none focus:outline-none"
-            rows={1}
+            autoFocus
           />
         </div>
-        {content.trim() && (
+        {hasContent && (
           <div className="flex items-center justify-between py-4 border-t border-neutral-100 dark:border-neutral-900 mt-4">
             <p className="text-sm text-neutral-600 dark:text-neutral-300">
-              {content.trim().split(/\s+/).length} words
+              {wordCount} word{wordCount !== 1 ? 's' : ''}
             </p>
             <button
               onClick={handleSave}

@@ -92,11 +92,13 @@ export const clearSyncQueue = async (): Promise<void> => {
 export const createEntry = async (
   content: string,
   tags: string[] = [],
-  mood?: Entry['mood']
+  mood?: Entry['mood'],
+  contentVersion?: Entry['contentVersion']
 ): Promise<Entry> => {
   const entry: Entry = {
     id: uuidv4(),
     content,
+    contentVersion: contentVersion || 2, // Default to Yoopta format for new entries
     tags,
     mood,
     createdAt: new Date(),

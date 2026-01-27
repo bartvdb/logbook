@@ -1,6 +1,9 @@
 // Entry types
 export type Mood = 'great' | 'good' | 'neutral' | 'low' | 'tough';
 
+// Yoopta content format version for migration support
+export type ContentVersion = 1 | 2; // 1 = legacy plain text/HTML, 2 = Yoopta JSON
+
 export interface AIMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -10,7 +13,8 @@ export interface AIMessage {
 
 export interface Entry {
   id?: string;
-  content: string;
+  content: string; // For v1: plain text/HTML, For v2: JSON stringified Yoopta content
+  contentVersion?: ContentVersion; // undefined or 1 = legacy, 2 = Yoopta JSON
   tags: string[];
   mood?: Mood;
   createdAt: Date;

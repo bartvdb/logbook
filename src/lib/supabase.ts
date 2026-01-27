@@ -19,6 +19,7 @@ export const isSupabaseConfigured = (): boolean => {
 export interface DbEntry {
   id: string;
   content: string;
+  content_version: number | null; // 1 = legacy, 2 = Yoopta JSON
   tags: string[];
   mood: string | null;
   ai_conversation: Array<{
