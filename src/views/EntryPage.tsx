@@ -2,7 +2,6 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEntry, useEntries } from '@/hooks';
 import { MentorChat } from '@/components/mentor';
-import { VoiceInput } from '@/components/ui';
 import { formatTime } from '@/utils/date';
 import { sanitizeHTML } from '@/utils/sanitize';
 
@@ -57,15 +56,6 @@ const EntryPage: React.FC = () => {
       navigate('/entries');
     }
   }, [id, remove, navigate]);
-
-  const handleVoiceTranscript = useCallback((text: string) => {
-    setEditContent(prev => {
-      if (prev && !prev.endsWith(' ') && !prev.endsWith('\n')) {
-        return prev + ' ' + text;
-      }
-      return prev + text;
-    });
-  }, []);
 
   if (isLoading) {
     return (
@@ -135,15 +125,12 @@ const EntryPage: React.FC = () => {
               rows={5}
             />
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <VoiceInput onTranscript={handleVoiceTranscript} />
-                {editContent.trim() && (
-                  <p className="text-sm text-neutral-600 dark:text-neutral-300">
-                    {editContent.trim().split(/\s+/).length} words
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center gap-4">
+              {editContent.trim() && (
+                <p className="text-sm text-neutral-600 dark:text-neutral-300">
+                  {editContent.trim().split(/\s+/).length} words
+                </p>
+              )}
+              <div className="flex items-center gap-4 ml-auto">
                 <button
                   onClick={() => setIsEditing(false)}
                   className="text-base text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
