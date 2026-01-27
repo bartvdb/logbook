@@ -272,6 +272,8 @@ export const LogbookEditor = forwardRef<YooptaEditorRef, YooptaEditorProps>(({
         placeholder={placeholder}
         selectionBoxRoot={selectionRef}
         autoFocus={autoFocus}
+        width="100%"
+        style={{ width: '100%', maxWidth: '100%' }}
       />
     </div>
   );

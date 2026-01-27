@@ -124,7 +124,13 @@
 }
 
 .yoopta-editor-container [data-yoopta-editor] {
-  @apply outline-none;
+  @apply outline-none w-full max-w-none;
+}
+
+/* Override Yoopta's default max-width */
+.yoopta-editor-container [data-yoopta-editor-content] {
+  max-width: 100% !important;
+  width: 100% !important;
 }
 
 .yoopta-editor-container [data-yoopta-block] {

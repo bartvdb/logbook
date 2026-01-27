@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { YooptaContentValue } from '@yoopta/editor';
 import { useEntries } from '@/hooks';
@@ -16,25 +16,48 @@ const HomePage: React.FC = () => {
     return text.trim().length > 0;
   }, [content]);
 
-  // Word count
-  const wordCount = useMemo(() => {
+  // Word count from state
+  const wordCountFromState = useMemo(() => {
     const text = yooptaContentToText(content);
     if (!text.trim()) return 0;
     return text.trim().split(/\s+/).length;
   }, [content]);
 
+  // Get word count from editor ref for display
+  const getWordCount = useCallback(() => {
+    const editorContent = editorRef.current?.getContent();
+    if (editorContent) {
+      const text = yooptaContentToText(editorContent);
+      if (text.trim()) {
+        return text.trim().split(/\s+/).length;
+      }
+    }
+    return wordCountFromState;
+  }, [wordCountFromState]);
+
   const handleSave = useCallback(async () => {
     // Get content directly from editor instance
-    const editorContent = editorRef.current?.getContent() || content;
-    const text = yooptaContentToText(editorContent);
+    const editorContent = editorRef.current?.getContent();
 
-    if (!text.trim()) return;
+    if (!editorContent) {
+      console.error('No editor content available');
+      return;
+    }
+
+    const text = yooptaContentToText(editorContent);
+    if (!text.trim()) {
+      console.log('Content is empty, not saving');
+      return;
+    }
+
+    console.log('Saving content:', editorContent);
 
     // Save as Yoopta JSON with version 2
     const entry = await create(JSON.stringify(editorContent), [], undefined, 2);
+    console.log('Entry created:', entry);
     setContent(createEmptyDocument());
     navigate(`/entry/${entry.id}`);
-  }, [content, create, navigate]);
+  }, [create, navigate]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     // Cmd/Ctrl + Enter to save
@@ -43,6 +66,9 @@ const HomePage: React.FC = () => {
       handleSave();
     }
   }, [handleSave]);
+
+  // Display word count - use state if hasContent, otherwise show 0
+  const displayWordCount = hasContent ? wordCountFromState : getWordCount();
 
   return (
     <div className="flex flex-col h-full" onKeyDown={handleKeyDown}>
@@ -57,19 +83,18 @@ const HomePage: React.FC = () => {
             autoFocus
           />
         </div>
-        {hasContent && (
-          <div className="flex items-center justify-between py-4 border-t border-neutral-100 dark:border-neutral-900 mt-4">
-            <p className="text-sm text-neutral-600 dark:text-neutral-300">
-              {wordCount} word{wordCount !== 1 ? 's' : ''}
-            </p>
-            <button
-              onClick={handleSave}
-              className="text-base text-neutral-700 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white transition-colors"
-            >
-              Save
-            </button>
-          </div>
-        )}
+        {/* Always show footer when there's content */}
+        <div className="flex items-center justify-between py-4 border-t border-neutral-100 dark:border-neutral-900 mt-4">
+          <p className="text-sm text-neutral-600 dark:text-neutral-300">
+            {displayWordCount} word{displayWordCount !== 1 ? 's' : ''}
+          </p>
+          <button
+            onClick={handleSave}
+            className="text-base text-neutral-700 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white transition-colors"
+          >
+            Save
+          </button>
+        </div>
       </div>
     </div>
   );
