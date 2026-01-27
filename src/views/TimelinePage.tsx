@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { useEntries, useTags, useSearch } from '@/hooks';
+import { useEntries, useTags } from '@/hooks';
 import { EntryList } from '@/components/entry';
 import { Mood, MOOD_OPTIONS } from '@/types';
+import { stripHtml } from '@/utils/markdown';
 
 const TimelinePage: React.FC = () => {
   const { entries, isLoading, remove } = useEntries();
   const { tags: allTags } = useTags();
-  const { search, results: searchResults } = useSearch();
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,20 +27,14 @@ const TimelinePage: React.FC = () => {
   const filteredEntries = useMemo(() => {
     let result = entries;
 
-    // Text search
+    // Text search - simple content filter
     if (searchQuery.trim()) {
-      search({ query: searchQuery, tags: [], dateFrom: undefined, dateTo: undefined, mood: undefined });
-      const matchingIds = new Set(searchResults.map(r => r.id));
-      if (searchResults.length > 0) {
-        result = result.filter(e => e.id && matchingIds.has(e.id));
-      } else if (searchQuery.trim().length > 0) {
-        // If search returned no results, filter by content contains
-        const query = searchQuery.toLowerCase();
-        result = result.filter(e =>
-          e.content.toLowerCase().includes(query) ||
-          e.tags.some(t => t.toLowerCase().includes(query))
-        );
-      }
+      const query = searchQuery.toLowerCase();
+      result = result.filter(e => {
+        const plainContent = stripHtml(e.content).toLowerCase();
+        return plainContent.includes(query) ||
+          e.tags.some(t => t.toLowerCase().includes(query));
+      });
     }
 
     // Tag filter
@@ -69,7 +63,7 @@ const TimelinePage: React.FC = () => {
     }
 
     return result;
-  }, [entries, searchQuery, searchResults, selectedTags, selectedMood, dateFrom, dateTo, search]);
+  }, [entries, searchQuery, selectedTags, selectedMood, dateFrom, dateTo]);
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev =>

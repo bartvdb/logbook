@@ -6,7 +6,6 @@ import { useTheme, useBackgroundSync } from '@/hooks';
 // Views
 import HomePage from '@/views/HomePage';
 import TimelinePage from '@/views/TimelinePage';
-import CalendarPage from '@/views/CalendarPage';
 import ProfilePage from '@/views/ProfilePage';
 import SettingsPage from '@/views/SettingsPage';
 import EntryPage from '@/views/EntryPage';
@@ -49,7 +48,6 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/timeline" element={<TimelinePage />} />
-            <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/entry/:id" element={<EntryPage />} />
