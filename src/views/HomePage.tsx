@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTodayEntries, useEntries } from '@/hooks';
 import { stripHtml } from '@/utils/markdown';
-import { SwipeToDelete } from '@/components/ui';
+import { SwipeToDelete, VoiceInput } from '@/components/ui';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +22,16 @@ const HomePage: React.FC = () => {
   // Focus on mount
   useEffect(() => {
     textareaRef.current?.focus();
+  }, []);
+
+  const handleVoiceTranscript = useCallback((text: string) => {
+    setContent(prev => {
+      // Add space if there's existing content
+      if (prev && !prev.endsWith(' ') && !prev.endsWith('\n')) {
+        return prev + ' ' + text;
+      }
+      return prev + text;
+    });
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -83,19 +93,24 @@ const HomePage: React.FC = () => {
           className="w-full bg-transparent text-neutral-900 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 text-xl leading-relaxed resize-none focus:outline-none"
           rows={1}
         />
-        {content.trim() && (
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-neutral-100 dark:border-neutral-900">
-            <p className="text-sm text-neutral-600 dark:text-neutral-300">
-              {content.trim().split(/\s+/).length} words
-            </p>
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-neutral-100 dark:border-neutral-900">
+          <div className="flex items-center gap-4">
+            <VoiceInput onTranscript={handleVoiceTranscript} />
+            {content.trim() && (
+              <p className="text-sm text-neutral-600 dark:text-neutral-300">
+                {content.trim().split(/\s+/).length} words
+              </p>
+            )}
+          </div>
+          {content.trim() && (
             <button
               onClick={handleSave}
               className="text-base text-neutral-700 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white transition-colors"
             >
               Save
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Today's entries */}
