@@ -5,7 +5,7 @@ import { useTheme, useBackgroundSync } from '@/hooks';
 
 // Views
 import HomePage from '@/views/HomePage';
-import TimelinePage from '@/views/TimelinePage';
+import EntriesPage from '@/views/EntriesPage';
 import ProfilePage from '@/views/ProfilePage';
 import SettingsPage from '@/views/SettingsPage';
 import EntryPage from '@/views/EntryPage';
@@ -22,10 +22,10 @@ const App: React.FC = () => {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl + K for timeline (search is integrated there)
+      // Cmd/Ctrl + K for entries
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        window.location.href = '/timeline';
+        window.location.href = '/entries';
       }
       // Cmd/Ctrl + N for new entry
       if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
@@ -39,15 +39,15 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-white dark:bg-neutral-950">
       <Navigation />
 
       {/* Main content */}
-      <main className="lg:ml-64 pt-14 pb-20 lg:pt-0 lg:pb-0">
-        <div className="max-w-4xl mx-auto px-4 py-6">
+      <main className="lg:ml-56 pt-12 pb-16 lg:pt-0 lg:pb-0">
+        <div className="max-w-2xl mx-auto px-4 py-8 lg:py-12">
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/timeline" element={<TimelinePage />} />
+            <Route path="/entries" element={<EntriesPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/entry/:id" element={<EntryPage />} />

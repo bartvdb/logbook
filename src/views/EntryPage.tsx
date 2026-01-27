@@ -1,11 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEntry, useEntries } from '@/hooks';
-import { EntryEditor } from '@/components/entry';
 import { MentorChat } from '@/components/mentor';
-import { TagPill } from '@/components/ui';
-import { Mood, MOOD_OPTIONS } from '@/types';
-import { formatDate, formatTime } from '@/utils/date';
+import { formatTime } from '@/utils/date';
 import { sanitizeHTML } from '@/utils/sanitize';
 
 const EntryPage: React.FC = () => {
@@ -14,30 +11,58 @@ const EntryPage: React.FC = () => {
   const { entry, isLoading } = useEntry(id);
   const { update, remove } = useEntries();
   const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSave = useCallback(
-    async (content: string, tags: string[], mood?: Mood) => {
-      if (id) {
-        await update(id, { content, tags, mood });
-        setIsEditing(false);
-      }
-    },
-    [id, update]
-  );
+  // Auto-resize textarea when editing
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      textareaRef.current.focus();
+    }
+  }, [isEditing, editContent]);
+
+  // Set edit content when entry loads
+  useEffect(() => {
+    if (entry) {
+      // Strip HTML for plain text editing
+      const temp = document.createElement('div');
+      temp.innerHTML = entry.content;
+      setEditContent(temp.textContent || temp.innerText || '');
+    }
+  }, [entry]);
+
+  const handleSave = useCallback(async () => {
+    if (id && editContent.trim()) {
+      await update(id, { content: editContent });
+      setIsEditing(false);
+    }
+  }, [id, editContent, update]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    }
+    if (e.key === 'Escape') {
+      setIsEditing(false);
+    }
+  };
 
   const handleDelete = useCallback(async () => {
-    if (id && window.confirm('Are you sure you want to delete this entry?')) {
+    if (id && window.confirm('Delete this entry?')) {
       await remove(id);
-      navigate('/timeline');
+      navigate('/entries');
     }
   }, [id, remove, navigate]);
 
   if (isLoading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-1/4" />
-        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3" />
-        <div className="h-64 bg-slate-200 dark:bg-slate-700 rounded" />
+        <div className="h-4 w-32 bg-neutral-100 dark:bg-neutral-900 rounded" />
+        <div className="h-6 w-3/4 bg-neutral-100 dark:bg-neutral-900 rounded" />
+        <div className="h-6 w-1/2 bg-neutral-100 dark:bg-neutral-900 rounded" />
       </div>
     );
   }
@@ -45,108 +70,105 @@ const EntryPage: React.FC = () => {
   if (!entry) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+        <p className="text-neutral-500 dark:text-neutral-400 mb-4">
           Entry not found
-        </h2>
-        <p className="text-slate-500 dark:text-slate-400 mb-4">
-          This entry may have been deleted.
         </p>
         <button
-          onClick={() => navigate('/timeline')}
-          className="text-blue-500 hover:text-blue-600"
+          onClick={() => navigate('/entries')}
+          className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
         >
-          Go to Timeline
+          Go to Entries
         </button>
       </div>
     );
   }
 
-  const moodOption = entry.mood
-    ? MOOD_OPTIONS.find((m) => m.value === entry.mood)
-    : undefined;
+  const entryDate = new Date(entry.createdAt);
+  const formattedDate = entryDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-start justify-between">
+    <div className="space-y-8">
+      {/* Back button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="inline-flex items-center gap-1 text-sm text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+        Back
+      </button>
+
+      {/* Entry content */}
+      <div className="space-y-4">
+        {/* Date and time */}
         <div>
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 mb-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back
-          </button>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-            {formatDate(entry.createdAt)}
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400">
-            {formatTime(entry.createdAt)}
-            {moodOption && ` · ${moodOption.emoji} ${moodOption.label}`}
+          <p className="text-xs text-neutral-400 dark:text-neutral-600">
+            {formattedDate} · {formatTime(entry.createdAt)}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {!isEditing && (
-            <>
+
+        {/* Content */}
+        {isEditing ? (
+          <div className="space-y-4">
+            <textarea
+              ref={textareaRef}
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="w-full bg-transparent text-neutral-900 dark:text-white text-lg leading-relaxed resize-none focus:outline-none"
+              rows={5}
+            />
+            <div className="flex items-center gap-4">
               <button
-                onClick={() => setIsEditing(true)}
-                className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                title="Edit"
+                onClick={handleSave}
+                className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
+                Save
               </button>
               <button
-                onClick={handleDelete}
-                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                title="Delete"
+                onClick={() => setIsEditing(false)}
+                className="text-sm text-neutral-400 hover:text-neutral-600 transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                Cancel
               </button>
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        ) : (
+          <div
+            onClick={() => setIsEditing(true)}
+            className="prose prose-neutral dark:prose-invert max-w-none cursor-text prose-p:text-neutral-700 dark:prose-p:text-neutral-300 prose-p:leading-relaxed prose-headings:text-neutral-900 dark:prose-headings:text-white"
+            dangerouslySetInnerHTML={{ __html: sanitizeHTML(entry.content) }}
+          />
+        )}
+
+        {/* Actions */}
+        {!isEditing && (
+          <div className="flex items-center gap-4 pt-4">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="text-sm text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+            >
+              Edit
+            </button>
+            <button
+              onClick={handleDelete}
+              className="text-sm text-neutral-400 hover:text-red-500 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          {isEditing ? (
-            <EntryEditor
-              entry={entry}
-              onSave={handleSave}
-              onCancel={() => setIsEditing(false)}
-              autoSaveEnabled={true}
-            />
-          ) : (
-            <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
-              {/* Tags */}
-              {entry.tags.length > 0 && (
-                <div className="px-4 pt-4 flex flex-wrap gap-2">
-                  {entry.tags.map((tag) => (
-                    <TagPill key={tag} tag={tag} size="sm" />
-                  ))}
-                </div>
-              )}
-
-              {/* Content */}
-              <div
-                className="prose prose-slate dark:prose-invert max-w-none p-4"
-                dangerouslySetInnerHTML={{ __html: sanitizeHTML(entry.content) }}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Mentor Chat - always visible */}
-        <div>
-          <MentorChat entry={entry} />
-        </div>
+      {/* AI Mentor */}
+      <div className="border-t border-neutral-100 dark:border-neutral-900 pt-8">
+        <MentorChat entry={entry} />
       </div>
     </div>
   );
