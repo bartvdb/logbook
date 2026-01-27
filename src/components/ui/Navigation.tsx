@@ -188,6 +188,11 @@ export const Navigation: React.FC<NavigationProps> = ({ isCollapsed = false, onT
         <div className="flex items-center justify-center h-12 px-4 relative">
           <h1 className="text-sm font-medium text-neutral-900 dark:text-white">
             {navItems.find((item) => item.path === location.pathname)?.label || 'Logbook'}
+            {location.pathname === '/' && (
+              <span className="ml-2 text-neutral-400 dark:text-neutral-500 font-normal">
+                {getFormattedDate()}
+              </span>
+            )}
           </h1>
           <div className="absolute right-4">
             <SyncDot />
