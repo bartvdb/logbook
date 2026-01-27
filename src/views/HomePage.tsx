@@ -1,12 +1,13 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { YooptaContentValue } from '@yoopta/editor';
 import { useEntries } from '@/hooks';
-import { LogbookEditor, createEmptyDocument, yooptaContentToText } from '@/components/editor';
+import { LogbookEditor, createEmptyDocument, yooptaContentToText, YooptaEditorRef } from '@/components/editor';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { create } = useEntries();
+  const editorRef = useRef<YooptaEditorRef>(null);
   const [content, setContent] = useState<YooptaContentValue>(createEmptyDocument());
 
   // Check if content has any actual text
@@ -23,12 +24,17 @@ const HomePage: React.FC = () => {
   }, [content]);
 
   const handleSave = useCallback(async () => {
-    if (!hasContent) return;
+    // Get content directly from editor instance
+    const editorContent = editorRef.current?.getContent() || content;
+    const text = yooptaContentToText(editorContent);
+
+    if (!text.trim()) return;
+
     // Save as Yoopta JSON with version 2
-    const entry = await create(JSON.stringify(content), [], undefined, 2);
+    const entry = await create(JSON.stringify(editorContent), [], undefined, 2);
     setContent(createEmptyDocument());
     navigate(`/entry/${entry.id}`);
-  }, [content, hasContent, create, navigate]);
+  }, [content, create, navigate]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     // Cmd/Ctrl + Enter to save
@@ -44,6 +50,7 @@ const HomePage: React.FC = () => {
       <div className="flex-1 flex flex-col lg:justify-center">
         <div className="lg:max-h-[80vh] lg:overflow-auto">
           <LogbookEditor
+            ref={editorRef}
             value={content}
             onChange={setContent}
             placeholder="Start writing..."

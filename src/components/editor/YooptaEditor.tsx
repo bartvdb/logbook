@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useEffect } from 'react';
+import { useCallback, useMemo, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 import YooptaEditor, { createYooptaEditor, YooptaContentValue } from '@yoopta/editor';
 
 // Plugins
@@ -40,6 +40,10 @@ export interface YooptaEditorProps {
   placeholder?: string;
   autoFocus?: boolean;
   className?: string;
+}
+
+export interface YooptaEditorRef {
+  getContent: () => YooptaContentValue;
 }
 
 // Upload function for images and files
@@ -160,18 +164,23 @@ const TOOLS = {
   },
 };
 
-export const LogbookEditor: React.FC<YooptaEditorProps> = ({
+export const LogbookEditor = forwardRef<YooptaEditorRef, YooptaEditorProps>(({
   value,
   onChange,
   readOnly = false,
   placeholder = 'Start writing...',
   autoFocus = false,
   className = '',
-}) => {
+}, ref) => {
   const editor = useMemo(() => createYooptaEditor(), []);
   const selectionRef = useRef<HTMLDivElement>(null);
 
   const plugins = useMemo(() => createPlugins(), []);
+
+  // Expose getContent method via ref
+  useImperativeHandle(ref, () => ({
+    getContent: () => editor.children,
+  }), [editor]);
 
   // Handle paste for images
   useEffect(() => {
@@ -266,7 +275,9 @@ export const LogbookEditor: React.FC<YooptaEditorProps> = ({
       />
     </div>
   );
-};
+});
+
+LogbookEditor.displayName = 'LogbookEditor';
 
 // Helper to create empty document
 export const createEmptyDocument = (): YooptaContentValue => ({

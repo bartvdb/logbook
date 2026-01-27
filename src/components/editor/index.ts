@@ -5,4 +5,4 @@ export {
   yooptaContentToText,
   isYooptaContent,
 } from './YooptaEditor';
-export type { YooptaEditorProps } from './YooptaEditor';
+export type { YooptaEditorProps, YooptaEditorRef } from './YooptaEditor';
