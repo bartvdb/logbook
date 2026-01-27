@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Entry } from '@/types';
 import { truncateText } from '@/utils/markdown';
@@ -33,20 +33,18 @@ export const EntryCard: React.FC<EntryCardProps> = ({
   const { title, subtitle } = useMemo(() => {
     let plainText = '';
 
-    if (entry.contentVersion === 2) {
-      // Yoopta JSON format
-      try {
-        const parsed = JSON.parse(entry.content);
-        if (isYooptaContent(parsed)) {
-          plainText = yooptaContentToText(parsed);
-        } else {
-          plainText = entry.content;
-        }
-      } catch {
-        plainText = entry.content;
+    // First, try to detect if content is Yoopta JSON by trying to parse it
+    // This handles cases where contentVersion might not be set correctly
+    try {
+      const parsed = JSON.parse(entry.content);
+      if (isYooptaContent(parsed)) {
+        plainText = yooptaContentToText(parsed);
+      } else {
+        // Not Yoopta format, treat as legacy
+        plainText = stripHtml(entry.content);
       }
-    } else {
-      // Legacy format - strip HTML
+    } catch {
+      // Not valid JSON, treat as legacy plain text/HTML
       plainText = stripHtml(entry.content);
     }
 
@@ -56,7 +54,7 @@ export const EntryCard: React.FC<EntryCardProps> = ({
     const subtitle = lines.length > 1 ? truncateText(lines.slice(1).join(' '), 100) : '';
 
     return { title, subtitle };
-  }, [entry.content, entry.contentVersion]);
+  }, [entry.content]);
 
   return (
     <article

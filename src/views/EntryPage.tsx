@@ -1,8 +1,8 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { YooptaContentValue } from '@yoopta/editor';
 import { useEntry, useEntries, useProfile, usePreferences } from '@/hooks';
-import { LogbookEditor, textToYooptaContent, yooptaContentToText, isYooptaContent } from '@/components/editor';
+import { LogbookEditor, textToYooptaContent, yooptaContentToText, isYooptaContent, YooptaEditorRef } from '@/components/editor';
 import { formatTime } from '@/utils/date';
 import { getMentorResponse, isAPIConfigured } from '@/lib/ai';
 import { stripHtml } from '@/utils/markdown';
@@ -19,24 +19,24 @@ const EntryPage: React.FC = () => {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState<string | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const editorRef = useRef<YooptaEditorRef>(null);
+  const [editorKey, setEditorKey] = useState(0);
 
-  // Parse entry content based on version
+  // Parse entry content - detect Yoopta JSON automatically
   const parsedContent = useMemo((): YooptaContentValue => {
     if (!entry) return {};
 
-    // Check if content is Yoopta JSON (version 2)
-    if (entry.contentVersion === 2) {
-      try {
-        const parsed = JSON.parse(entry.content);
-        if (isYooptaContent(parsed)) {
-          return parsed;
-        }
-      } catch {
-        // Fall through to legacy handling
+    // Try to parse as JSON and check if it's Yoopta content
+    try {
+      const parsed = JSON.parse(entry.content);
+      if (isYooptaContent(parsed)) {
+        return parsed;
       }
+    } catch {
+      // Not valid JSON, fall through to legacy handling
     }
 
-    // Legacy content (version 1 or plain text/HTML)
+    // Legacy content - plain text/HTML
     const plainText = stripHtml(entry.content);
     return textToYooptaContent(plainText);
   }, [entry]);
@@ -45,18 +45,37 @@ const EntryPage: React.FC = () => {
   useEffect(() => {
     if (entry) {
       setEditorContent(parsedContent);
+      // Force editor re-creation when entry changes
+      setEditorKey(prev => prev + 1);
     }
-  }, [entry, parsedContent]);
+  }, [entry?.id, parsedContent]);
+
+  const handleStartEditing = useCallback(() => {
+    setEditorContent(parsedContent);
+    setEditorKey(prev => prev + 1);
+    setIsEditing(true);
+  }, [parsedContent]);
+
+  const handleCancelEditing = useCallback(() => {
+    setIsEditing(false);
+    setEditorContent(parsedContent);
+    setEditorKey(prev => prev + 1);
+  }, [parsedContent]);
 
   const handleSave = useCallback(async () => {
-    if (id && Object.keys(editorContent).length > 0) {
-      await update(id, {
-        content: JSON.stringify(editorContent),
-        contentVersion: 2,
-      });
-      setIsEditing(false);
-      refresh();
-    }
+    if (!id) return;
+
+    // Get content directly from editor instance
+    const contentToSave = editorRef.current?.getContent() || editorContent;
+
+    if (Object.keys(contentToSave).length === 0) return;
+
+    await update(id, {
+      content: JSON.stringify(contentToSave),
+      contentVersion: 2,
+    });
+    setIsEditing(false);
+    refresh();
   }, [id, editorContent, update, refresh]);
 
   const handleDelete = useCallback(async () => {
@@ -74,9 +93,7 @@ const EntryPage: React.FC = () => {
 
     try {
       // Get plain text from content for AI
-      const plainText = entry.contentVersion === 2
-        ? yooptaContentToText(parsedContent)
-        : stripHtml(entry.content);
+      const plainText = yooptaContentToText(parsedContent);
 
       // Create a modified entry with plain text for AI
       const entryForAI = {
@@ -159,16 +176,15 @@ const EntryPage: React.FC = () => {
         {isEditing ? (
           <div className="space-y-4">
             <LogbookEditor
+              key={`edit-${editorKey}`}
+              ref={editorRef}
               value={editorContent}
               onChange={setEditorContent}
               autoFocus
             />
             <div className="flex items-center justify-end gap-4 pt-4 border-t border-neutral-100 dark:border-neutral-900">
               <button
-                onClick={() => {
-                  setIsEditing(false);
-                  setEditorContent(parsedContent);
-                }}
+                onClick={handleCancelEditing}
                 className="text-base text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
               >
                 Cancel
@@ -183,10 +199,11 @@ const EntryPage: React.FC = () => {
           </div>
         ) : (
           <div
-            onClick={() => setIsEditing(true)}
+            onClick={handleStartEditing}
             className="cursor-text min-h-[100px]"
           >
             <LogbookEditor
+              key={`view-${editorKey}`}
               value={parsedContent}
               onChange={() => {}}
               readOnly
@@ -198,7 +215,7 @@ const EntryPage: React.FC = () => {
         {!isEditing && (
           <div className="flex items-center gap-4 pt-4">
             <button
-              onClick={() => setIsEditing(true)}
+              onClick={handleStartEditing}
               className="text-base text-neutral-600 hover:text-neutral-800 dark:text-neutral-300 dark:hover:text-neutral-100 transition-colors"
             >
               Edit
