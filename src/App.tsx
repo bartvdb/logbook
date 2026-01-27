@@ -7,7 +7,6 @@ import { useTheme, useBackgroundSync } from '@/hooks';
 import HomePage from '@/views/HomePage';
 import TimelinePage from '@/views/TimelinePage';
 import CalendarPage from '@/views/CalendarPage';
-import SearchPage from '@/views/SearchPage';
 import ProfilePage from '@/views/ProfilePage';
 import SettingsPage from '@/views/SettingsPage';
 import EntryPage from '@/views/EntryPage';
@@ -24,10 +23,10 @@ const App: React.FC = () => {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl + K for search
+      // Cmd/Ctrl + K for timeline (search is integrated there)
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        window.location.href = '/search';
+        window.location.href = '/timeline';
       }
       // Cmd/Ctrl + N for new entry
       if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
@@ -51,7 +50,6 @@ const App: React.FC = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/timeline" element={<TimelinePage />} />
             <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/search" element={<SearchPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/entry/:id" element={<EntryPage />} />
