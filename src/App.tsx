@@ -54,14 +54,14 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-neutral-950">
+    <div className="h-screen flex flex-col bg-white dark:bg-neutral-950">
       <Navigation isCollapsed={isSidebarCollapsed} onToggleCollapse={toggleSidebar} />
 
       {/* Main content */}
-      <main className={`pt-12 pb-16 lg:pt-0 lg:pb-0 transition-all duration-200 ${
+      <main className={`flex-1 flex flex-col pt-12 pb-16 lg:pt-0 lg:pb-0 transition-all duration-200 ${
         isSidebarCollapsed ? 'lg:ml-0' : 'lg:ml-56'
       }`}>
-        <div className="max-w-2xl mx-auto px-4 py-8 lg:py-12">
+        <div className="flex-1 flex flex-col max-w-2xl w-full mx-auto px-4 py-8 lg:py-12">
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/entries" element={<EntriesPage />} />
