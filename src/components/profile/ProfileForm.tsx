@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
 import { useProfile } from '@/hooks';
 import { Profile } from '@/types';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 interface ProfileFormProps {
   onSaved?: () => void;
@@ -72,84 +79,70 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSaved }) => {
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded" />
-        <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded" />
-        <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded" />
+        <div className="h-10 bg-muted rounded" />
+        <div className="h-10 bg-muted rounded" />
+        <div className="h-10 bg-muted rounded" />
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Basic Info */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-          Basic Information
-        </h3>
+        <h3 className="text-lg font-semibold">Basic Information</h3>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Name
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
             type="text"
             value={formData.name}
             onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
             placeholder="Your name"
-            className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Role / Title
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="role">Role / Title</Label>
+          <Input
+            id="role"
             type="text"
             value={formData.role}
             onChange={(e) => setFormData((prev) => ({ ...prev, role: e.target.value }))}
             placeholder="e.g., Product Manager, Software Engineer, Founder"
-            className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Industry
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="industry">Industry</Label>
+          <Input
+            id="industry"
             type="text"
             value={formData.industry}
             onChange={(e) => setFormData((prev) => ({ ...prev, industry: e.target.value }))}
             placeholder="e.g., Technology, Healthcare, Finance"
-            className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Experience Level
-          </label>
-          <textarea
+        <div className="space-y-2">
+          <Label htmlFor="experience">Experience Level</Label>
+          <Textarea
+            id="experience"
             value={formData.experience}
             onChange={(e) => setFormData((prev) => ({ ...prev, experience: e.target.value }))}
             placeholder="Brief description of your background and experience level..."
             rows={3}
-            className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
         </div>
       </div>
 
-      {/* Goals */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          Goals
-        </label>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-          What are you working towards?
-        </p>
-        <div className="flex gap-2 mb-2">
-          <input
+      <Separator />
+
+      <div className="space-y-2">
+        <Label>Goals</Label>
+        <p className="text-sm text-muted-foreground">What are you working towards?</p>
+        <div className="flex gap-2">
+          <Input
             type="text"
             value={goalInput}
             onChange={(e) => setGoalInput(e.target.value)}
@@ -160,47 +153,29 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSaved }) => {
               }
             }}
             placeholder="Add a goal..."
-            className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1"
           />
-          <button
-            type="button"
-            onClick={() => addItem('goals', goalInput, setGoalInput)}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
+          <Button type="button" onClick={() => addItem('goals', goalInput, setGoalInput)}>
             Add
-          </button>
+          </Button>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mt-2">
           {formData.goals.map((goal, index) => (
-            <span
-              key={index}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full text-sm"
-            >
+            <Badge key={index} variant="secondary" className="gap-1">
               {goal}
-              <button
-                type="button"
-                onClick={() => removeItem('goals', index)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button type="button" onClick={() => removeItem('goals', index)}>
+                <X className="h-3 w-3" />
               </button>
-            </span>
+            </Badge>
           ))}
         </div>
       </div>
 
-      {/* Values */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          Values
-        </label>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-          What principles guide your decisions?
-        </p>
-        <div className="flex gap-2 mb-2">
-          <input
+      <div className="space-y-2">
+        <Label>Values</Label>
+        <p className="text-sm text-muted-foreground">What principles guide your decisions?</p>
+        <div className="flex gap-2">
+          <Input
             type="text"
             value={valueInput}
             onChange={(e) => setValueInput(e.target.value)}
@@ -211,47 +186,29 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSaved }) => {
               }
             }}
             placeholder="Add a value..."
-            className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1"
           />
-          <button
-            type="button"
-            onClick={() => addItem('values', valueInput, setValueInput)}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
+          <Button type="button" onClick={() => addItem('values', valueInput, setValueInput)}>
             Add
-          </button>
+          </Button>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mt-2">
           {formData.values.map((value, index) => (
-            <span
-              key={index}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full text-sm"
-            >
+            <Badge key={index} variant="secondary" className="gap-1">
               {value}
-              <button
-                type="button"
-                onClick={() => removeItem('values', index)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button type="button" onClick={() => removeItem('values', index)}>
+                <X className="h-3 w-3" />
               </button>
-            </span>
+            </Badge>
           ))}
         </div>
       </div>
 
-      {/* Focus Areas */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          Focus Areas
-        </label>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-          What areas do you want to develop?
-        </p>
-        <div className="flex gap-2 mb-2">
-          <input
+      <div className="space-y-2">
+        <Label>Focus Areas</Label>
+        <p className="text-sm text-muted-foreground">What areas do you want to develop?</p>
+        <div className="flex gap-2">
+          <Input
             type="text"
             value={focusInput}
             onChange={(e) => setFocusInput(e.target.value)}
@@ -262,45 +219,27 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSaved }) => {
               }
             }}
             placeholder="Add a focus area..."
-            className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1"
           />
-          <button
-            type="button"
-            onClick={() => addItem('focusAreas', focusInput, setFocusInput)}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
+          <Button type="button" onClick={() => addItem('focusAreas', focusInput, setFocusInput)}>
             Add
-          </button>
+          </Button>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mt-2">
           {formData.focusAreas.map((area, index) => (
-            <span
-              key={index}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full text-sm"
-            >
+            <Badge key={index} variant="secondary" className="gap-1">
               {area}
-              <button
-                type="button"
-                onClick={() => removeItem('focusAreas', index)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button type="button" onClick={() => removeItem('focusAreas', index)}>
+                <X className="h-3 w-3" />
               </button>
-            </span>
+            </Badge>
           ))}
         </div>
       </div>
 
-      {/* Submit */}
-      <button
-        type="submit"
-        disabled={isSaving}
-        className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
+      <Button type="submit" className="w-full" disabled={isSaving}>
         {isSaving ? 'Saving...' : 'Save Profile'}
-      </button>
+      </Button>
     </form>
   );
 };

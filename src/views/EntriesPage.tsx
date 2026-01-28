@@ -1,10 +1,14 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Search, X } from 'lucide-react';
 import { useEntries } from '@/hooks';
 import { Entry } from '@/types';
 import { stripHtml } from '@/utils/markdown';
 import { formatDate } from '@/utils/date';
 import { SwipeToDelete } from '@/components/ui';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 const EntriesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,7 +35,6 @@ const EntriesPage: React.FC = () => {
     });
   }, [entries, searchQuery]);
 
-  // Group entries by date
   const groupedEntries = useMemo(() => {
     const groups: { [key: string]: Entry[] } = {};
     filteredEntries.forEach(entry => {
@@ -51,12 +54,12 @@ const EntriesPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <div className="h-6 w-24 bg-neutral-100 dark:bg-neutral-900 rounded animate-pulse" />
+        <div className="h-6 w-24 bg-muted rounded animate-pulse" />
         {[1, 2, 3].map(i => (
           <div key={i} className="space-y-3">
-            <div className="h-4 w-20 bg-neutral-100 dark:bg-neutral-900 rounded animate-pulse" />
-            <div className="h-5 w-3/4 bg-neutral-100 dark:bg-neutral-900 rounded animate-pulse" />
-            <div className="h-5 w-1/2 bg-neutral-100 dark:bg-neutral-900 rounded animate-pulse" />
+            <div className="h-4 w-20 bg-muted rounded animate-pulse" />
+            <div className="h-5 w-3/4 bg-muted rounded animate-pulse" />
+            <div className="h-5 w-1/2 bg-muted rounded animate-pulse" />
           </div>
         ))}
       </div>
@@ -65,44 +68,39 @@ const EntriesPage: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <h1 className="text-lg font-medium text-neutral-900 dark:text-white">
-        Entries
-      </h1>
+      <h1 className="text-lg font-medium">Entries</h1>
 
-      {/* Search */}
       <div className="relative">
-        <svg
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-        </svg>
-        <input
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search"
-          className="w-full py-2 pl-6 bg-transparent text-base text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none"
+          placeholder="Search entries..."
+          className="pl-9 pr-9"
         />
+        {searchQuery && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+            onClick={() => setSearchQuery('')}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
-      {/* Entry list */}
       {filteredEntries.length === 0 ? (
-        <p className="text-neutral-600 dark:text-neutral-300 text-base">
+        <p className="text-muted-foreground">
           {searchQuery ? 'No entries found.' : 'No entries yet.'}
         </p>
       ) : (
-        <div className="space-y-10">
-          {groupedEntries.map(([date, dateEntries]) => (
+        <div className="space-y-8">
+          {groupedEntries.map(([date, dateEntries], groupIndex) => (
             <div key={date}>
-              <p className="text-sm text-neutral-600 dark:text-neutral-300 mb-4">
-                {date}
-              </p>
-              <div className="space-y-1 -mx-2">
+              <p className="text-sm text-muted-foreground mb-3">{date}</p>
+              <div className="space-y-1">
                 {dateEntries.map(entry => (
                   <SwipeToDelete
                     key={entry.id}
@@ -110,23 +108,22 @@ const EntriesPage: React.FC = () => {
                   >
                     <div
                       onClick={() => navigate(`/entry/${entry.id}`)}
-                      className="group flex items-center justify-between py-2 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900 px-2 rounded transition-colors"
+                      className="group flex items-center justify-between py-2 px-2 -mx-2 cursor-pointer hover:bg-accent rounded-md transition-colors"
                     >
-                      <span className="text-base text-neutral-800 dark:text-neutral-200 truncate">
-                        {getTitle(entry.content)}
-                      </span>
-                      <button
+                      <span className="text-sm truncate">{getTitle(entry.content)}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity hidden lg:flex"
                         onClick={(e) => entry.id && handleDelete(entry.id, e)}
-                        className="text-neutral-300 dark:text-neutral-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 hidden lg:block"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
+                        <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                      </Button>
                     </div>
                   </SwipeToDelete>
                 ))}
               </div>
+              {groupIndex < groupedEntries.length - 1 && <Separator className="mt-6" />}
             </div>
           ))}
         </div>
