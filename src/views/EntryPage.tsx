@@ -113,7 +113,7 @@ const EntryPage: React.FC = () => {
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full min-h-[200px] border-0 bg-transparent text-lg leading-relaxed resize-none focus-visible:ring-0 shadow-none"
+              className="w-full min-h-[200px] border-0 bg-transparent text-[20px] leading-relaxed resize-none focus-visible:ring-0 shadow-none"
               rows={5}
             />
             <Separator />

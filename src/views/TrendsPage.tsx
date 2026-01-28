@@ -1,8 +1,13 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { ChevronDown, Sparkles, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useEntries } from '@/hooks';
 import { Entry } from '@/types';
 import { stripHtml } from '@/utils/markdown';
 import { formatDate } from '@/utils/date';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const TrendsPage: React.FC = () => {
   const { entries, isLoading } = useEntries();
@@ -88,30 +93,26 @@ Provide a 2-3 sentence summary focusing on the main insights or learnings from t
     }
   }, []);
 
-  const toggleDay = useCallback((date: string, dayEntries: Entry[]) => {
+  const toggleDay = useCallback((date: string) => {
     setExpandedDays(prev => {
       const next = new Set(prev);
       if (next.has(date)) {
         next.delete(date);
       } else {
         next.add(date);
-        // Generate summary if not already generated
-        if (!summaries.has(date)) {
-          generateSummary(date, dayEntries);
-        }
       }
       return next;
     });
-  }, [summaries, generateSummary]);
+  }, []);
 
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <div className="h-6 w-24 bg-neutral-100 dark:bg-neutral-900 rounded animate-pulse" />
+        <div className="h-6 w-24 bg-muted rounded animate-pulse" />
         {[1, 2, 3].map(i => (
           <div key={i} className="space-y-3">
-            <div className="h-4 w-32 bg-neutral-100 dark:bg-neutral-900 rounded animate-pulse" />
-            <div className="h-16 w-full bg-neutral-100 dark:bg-neutral-900 rounded animate-pulse" />
+            <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+            <div className="h-16 w-full bg-muted rounded animate-pulse" />
           </div>
         ))}
       </div>
@@ -119,104 +120,103 @@ Provide a 2-3 sentence summary focusing on the main insights or learnings from t
   }
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-lg font-medium text-neutral-900 dark:text-white">
-        Trends
-      </h1>
-
-      <p className="text-sm text-neutral-600 dark:text-neutral-300">
-        Daily insights and learnings from your journal entries.
-      </p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Trends</h1>
+        <p className="text-muted-foreground">
+          Daily insights and learnings from your journal entries.
+        </p>
+      </div>
 
       {groupedByDay.length === 0 ? (
-        <p className="text-neutral-600 dark:text-neutral-300 text-base">
+        <p className="text-muted-foreground">
           No entries yet. Start writing to see your trends.
         </p>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {groupedByDay.map(({ date, entries: dayEntries, count }) => {
             const isExpanded = expandedDays.has(date);
             const summary = summaries.get(date);
             const hasMultipleEntries = count > 1;
 
             return (
-              <div
-                key={date}
-                className="border border-neutral-100 dark:border-neutral-900 rounded-lg overflow-hidden"
-              >
-                <button
-                  onClick={() => toggleDay(date, dayEntries)}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
+              <Card key={date}>
+                <CardHeader
+                  className="cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => toggleDay(date)}
                 >
-                  <div>
-                    <p className="text-base text-neutral-800 dark:text-neutral-200">
-                      {date}
-                    </p>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                      {count} {count === 1 ? 'entry' : 'entries'}
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{date}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {count} {count === 1 ? 'entry' : 'entries'}
+                      </p>
+                    </div>
+                    <ChevronDown
+                      className={cn(
+                        "w-5 h-5 text-muted-foreground transition-transform",
+                        isExpanded && "rotate-180"
+                      )}
+                    />
                   </div>
-                  <svg
-                    className={`w-5 h-5 text-neutral-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                  </svg>
-                </button>
+                </CardHeader>
 
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-neutral-100 dark:border-neutral-900">
+                  <CardContent className="pt-0 border-t">
                     {/* Summary section */}
                     <div className="pt-4">
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
                         {hasMultipleEntries ? 'Daily Summary' : 'Insight'}
                       </p>
 
                       {summary?.isLoading ? (
-                        <div className="space-y-2">
-                          <div className="h-4 w-full bg-neutral-100 dark:bg-neutral-900 rounded animate-pulse" />
-                          <div className="h-4 w-3/4 bg-neutral-100 dark:bg-neutral-900 rounded animate-pulse" />
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-sm">Generating summary...</span>
                         </div>
                       ) : summary?.text ? (
-                        <p className="text-base text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                        <p className="text-sm leading-relaxed">
                           {summary.text}
                         </p>
                       ) : (
-                        <button
-                          onClick={() => generateSummary(date, dayEntries)}
-                          className="text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            generateSummary(date, dayEntries);
+                          }}
+                          className="gap-2"
                         >
-                          Generate {hasMultipleEntries ? 'summary' : 'insight'}...
-                        </button>
+                          <Sparkles className="w-4 h-4" />
+                          Generate {hasMultipleEntries ? 'summary' : 'insight'}
+                        </Button>
                       )}
                     </div>
 
                     {/* Entry previews */}
-                    <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-900">
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
+                    <div className="mt-4 pt-4 border-t">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
                         Entries
                       </p>
                       <div className="space-y-2">
                         {dayEntries.map(entry => {
                           const preview = stripHtml(entry.content).slice(0, 100);
                           return (
-                            <a
+                            <Link
                               key={entry.id}
-                              href={`/entry/${entry.id}`}
-                              className="block text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white truncate transition-colors"
+                              to={`/entry/${entry.id}`}
+                              className="block text-sm text-muted-foreground hover:text-foreground truncate transition-colors"
                             >
                               {preview}...
-                            </a>
+                            </Link>
                           );
                         })}
                       </div>
                     </div>
-                  </div>
+                  </CardContent>
                 )}
-              </div>
+              </Card>
             );
           })}
         </div>
