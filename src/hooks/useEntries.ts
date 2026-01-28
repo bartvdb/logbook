@@ -49,8 +49,8 @@ export const useEntries = () => {
   }, [localEntries]);
 
   const create = useCallback(
-    async (content: string, tags: string[] = [], mood?: Entry['mood'], contentVersion?: Entry['contentVersion']) => {
-      const entry = await dataService.createEntry(content, tags, mood, contentVersion);
+    async (content: string, tags: string[] = [], mood?: Entry['mood']) => {
+      const entry = await dataService.createEntry(content, tags, mood);
       searchService.indexEntry(entry);
       // Refresh the list
       await fetchEntries();
@@ -134,27 +134,27 @@ export const useEntry = (id: string | undefined) => {
   const [entry, setEntry] = useState<Entry | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(!!id);
 
-  const fetchEntry = useCallback(async () => {
+  useEffect(() => {
     if (!id) {
       setEntry(undefined);
       setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const result = await dataService.getEntry(id);
-      setEntry(result);
-    } catch (error) {
-      console.error('Error fetching entry:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [id]);
+    const fetchEntry = async () => {
+      setIsLoading(true);
+      try {
+        const result = await dataService.getEntry(id);
+        setEntry(result);
+      } catch (error) {
+        console.error('Error fetching entry:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  useEffect(() => {
     fetchEntry();
-  }, [fetchEntry]);
+  }, [id]);
 
   // Also listen for local changes
   const localEntry = useLiveQuery(
@@ -171,7 +171,6 @@ export const useEntry = (id: string | undefined) => {
   return {
     entry,
     isLoading,
-    refresh: fetchEntry,
   };
 };
 

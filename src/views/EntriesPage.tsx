@@ -5,7 +5,6 @@ import { Entry } from '@/types';
 import { stripHtml } from '@/utils/markdown';
 import { formatDate } from '@/utils/date';
 import { SwipeToDelete } from '@/components/ui';
-import { yooptaContentToText, isYooptaContent } from '@/components/editor';
 
 const EntriesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -22,27 +21,15 @@ const EntriesPage: React.FC = () => {
     [remove]
   );
 
-  const getPlainText = useCallback((content: string) => {
-    try {
-      const parsed = JSON.parse(content);
-      if (isYooptaContent(parsed)) {
-        return yooptaContentToText(parsed);
-      }
-    } catch {
-      // Not valid JSON
-    }
-    return stripHtml(content);
-  }, []);
-
   const filteredEntries = useMemo(() => {
     if (!searchQuery.trim()) return entries;
     const query = searchQuery.toLowerCase();
     return entries.filter(e => {
-      const plainContent = getPlainText(e.content).toLowerCase();
+      const plainContent = stripHtml(e.content).toLowerCase();
       return plainContent.includes(query) ||
         e.tags.some(t => t.toLowerCase().includes(query));
     });
-  }, [entries, searchQuery, getPlainText]);
+  }, [entries, searchQuery]);
 
   // Group entries by date
   const groupedEntries = useMemo(() => {
@@ -56,23 +43,9 @@ const EntriesPage: React.FC = () => {
   }, [filteredEntries]);
 
   const getTitle = (content: string) => {
-    let plainText = '';
-
-    // Try to parse as Yoopta JSON first
-    try {
-      const parsed = JSON.parse(content);
-      if (isYooptaContent(parsed)) {
-        plainText = yooptaContentToText(parsed);
-      } else {
-        plainText = stripHtml(content);
-      }
-    } catch {
-      // Not valid JSON, treat as legacy plain text/HTML
-      plainText = stripHtml(content);
-    }
-
-    const firstLine = plainText.split('\n').filter(l => l.trim())[0];
-    return firstLine?.slice(0, 60) || 'Untitled';
+    const plain = stripHtml(content);
+    const firstLine = plain.split('\n')[0];
+    return firstLine.slice(0, 60) || 'Untitled';
   };
 
   if (isLoading) {

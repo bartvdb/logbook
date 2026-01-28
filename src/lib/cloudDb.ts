@@ -1,11 +1,10 @@
 import { supabase, isSupabaseConfigured, DbEntry, DbProfile, DbPreferences, DbSettings } from './supabase';
-import { Entry, Profile, Preferences, Settings, AIMessage, Mood, ContentVersion } from '@/types';
+import { Entry, Profile, Preferences, Settings, AIMessage, Mood } from '@/types';
 
 // Convert from app types (camelCase) to database types (snake_case)
 const entryToDb = (entry: Entry): Omit<DbEntry, 'created_at' | 'updated_at'> & { created_at?: string; updated_at?: string } => ({
   id: entry.id!,
   content: entry.content,
-  content_version: entry.contentVersion || null,
   tags: entry.tags,
   mood: entry.mood || null,
   ai_conversation: entry.aiConversation.map(msg => ({
@@ -20,7 +19,6 @@ const entryToDb = (entry: Entry): Omit<DbEntry, 'created_at' | 'updated_at'> & {
 const dbToEntry = (dbEntry: DbEntry): Entry => ({
   id: dbEntry.id,
   content: dbEntry.content,
-  contentVersion: (dbEntry.content_version || 1) as ContentVersion,
   tags: dbEntry.tags || [],
   mood: dbEntry.mood as Mood | undefined,
   aiConversation: (dbEntry.ai_conversation || []).map(msg => ({
@@ -103,7 +101,6 @@ export const cloudDb = {
       .insert({
         id: dbEntry.id,
         content: dbEntry.content,
-        content_version: dbEntry.content_version,
         tags: dbEntry.tags,
         mood: dbEntry.mood,
         ai_conversation: dbEntry.ai_conversation,
@@ -161,7 +158,6 @@ export const cloudDb = {
     };
 
     if (updates.content !== undefined) dbUpdates.content = updates.content;
-    if (updates.contentVersion !== undefined) dbUpdates.content_version = updates.contentVersion;
     if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
     if (updates.mood !== undefined) dbUpdates.mood = updates.mood;
     if (updates.aiConversation !== undefined) {

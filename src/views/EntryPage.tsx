@@ -1,82 +1,54 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { YooptaContentValue } from '@yoopta/editor';
-import { useEntry, useEntries, useProfile, usePreferences } from '@/hooks';
-import { LogbookEditor, textToYooptaContent, yooptaContentToText, isYooptaContent, YooptaEditorRef } from '@/components/editor';
+import { useEntry, useEntries } from '@/hooks';
+import { MentorChat } from '@/components/mentor';
 import { formatTime } from '@/utils/date';
-import { getMentorResponse, isAPIConfigured } from '@/lib/ai';
-import { stripHtml } from '@/utils/markdown';
+import { sanitizeHTML } from '@/utils/sanitize';
 
 const EntryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { entry, isLoading, refresh } = useEntry(id);
+  const { entry, isLoading } = useEntry(id);
   const { update, remove } = useEntries();
-  const { profile } = useProfile();
-  const { preferences } = usePreferences();
   const [isEditing, setIsEditing] = useState(false);
-  const [editorContent, setEditorContent] = useState<YooptaContentValue>({});
-  const [isSummarizing, setIsSummarizing] = useState(false);
-  const [summary, setSummary] = useState<string | null>(null);
-  const [summaryError, setSummaryError] = useState<string | null>(null);
-  const editorRef = useRef<YooptaEditorRef>(null);
-  const [editorKey, setEditorKey] = useState(0);
+  const [editContent, setEditContent] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Parse entry content - detect Yoopta JSON automatically
-  const parsedContent = useMemo((): YooptaContentValue => {
-    if (!entry) return {};
-
-    // Try to parse as JSON and check if it's Yoopta content
-    try {
-      const parsed = JSON.parse(entry.content);
-      if (isYooptaContent(parsed)) {
-        return parsed;
-      }
-    } catch {
-      // Not valid JSON, fall through to legacy handling
+  // Auto-resize textarea when editing
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      textareaRef.current.focus();
     }
+  }, [isEditing, editContent]);
 
-    // Legacy content - plain text/HTML
-    const plainText = stripHtml(entry.content);
-    return textToYooptaContent(plainText);
-  }, [entry]);
-
-  // Set editor content when entry loads
+  // Set edit content when entry loads
   useEffect(() => {
     if (entry) {
-      setEditorContent(parsedContent);
-      // Force editor re-creation when entry changes
-      setEditorKey(prev => prev + 1);
+      // Strip HTML for plain text editing
+      const temp = document.createElement('div');
+      temp.innerHTML = entry.content;
+      setEditContent(temp.textContent || temp.innerText || '');
     }
-  }, [entry?.id, parsedContent]);
-
-  const handleStartEditing = useCallback(() => {
-    setEditorContent(parsedContent);
-    setEditorKey(prev => prev + 1);
-    setIsEditing(true);
-  }, [parsedContent]);
-
-  const handleCancelEditing = useCallback(() => {
-    setIsEditing(false);
-    setEditorContent(parsedContent);
-    setEditorKey(prev => prev + 1);
-  }, [parsedContent]);
+  }, [entry]);
 
   const handleSave = useCallback(async () => {
-    if (!id) return;
+    if (id && editContent.trim()) {
+      await update(id, { content: editContent });
+      setIsEditing(false);
+    }
+  }, [id, editContent, update]);
 
-    // Get content directly from editor instance
-    const contentToSave = editorRef.current?.getContent() || editorContent;
-
-    if (Object.keys(contentToSave).length === 0) return;
-
-    await update(id, {
-      content: JSON.stringify(contentToSave),
-      contentVersion: 2,
-    });
-    setIsEditing(false);
-    refresh();
-  }, [id, editorContent, update, refresh]);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    }
+    if (e.key === 'Escape') {
+      setIsEditing(false);
+    }
+  };
 
   const handleDelete = useCallback(async () => {
     if (id && window.confirm('Delete this entry?')) {
@@ -84,37 +56,6 @@ const EntryPage: React.FC = () => {
       navigate('/entries');
     }
   }, [id, remove, navigate]);
-
-  const handleSummarize = useCallback(async () => {
-    if (!entry || !profile || !preferences || isSummarizing) return;
-
-    setIsSummarizing(true);
-    setSummaryError(null);
-
-    try {
-      // Get plain text from content for AI
-      const plainText = yooptaContentToText(parsedContent);
-
-      // Create a modified entry with plain text for AI
-      const entryForAI = {
-        ...entry,
-        content: plainText,
-      };
-
-      // Build a custom prompt for summarization with learnings
-      const response = await getMentorResponse(entryForAI, profile, {
-        ...preferences,
-        customInstructions: `${preferences.customInstructions || ''}\n\nProvide a concise summary of this entry focusing on key learnings, insights, and actionable takeaways. Format as bullet points.`,
-      });
-
-      setSummary(response.content);
-    } catch (error) {
-      console.error('Failed to generate summary:', error);
-      setSummaryError(error instanceof Error ? error.message : 'Failed to generate summary');
-    } finally {
-      setIsSummarizing(false);
-    }
-  }, [entry, profile, preferences, parsedContent, isSummarizing]);
 
   if (isLoading) {
     return (
@@ -175,47 +116,49 @@ const EntryPage: React.FC = () => {
         {/* Content */}
         {isEditing ? (
           <div className="space-y-4">
-            <LogbookEditor
-              key={`edit-${editorKey}`}
-              ref={editorRef}
-              value={editorContent}
-              onChange={setEditorContent}
-              autoFocus
+            <textarea
+              ref={textareaRef}
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="w-full bg-transparent text-neutral-900 dark:text-white text-xl leading-relaxed resize-none focus:outline-none"
+              rows={5}
             />
-            <div className="flex items-center justify-end gap-4 pt-4 border-t border-neutral-100 dark:border-neutral-900">
-              <button
-                onClick={handleCancelEditing}
-                className="text-base text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="text-base text-neutral-700 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white transition-colors"
-              >
-                Save
-              </button>
+            <div className="flex items-center justify-between">
+              {editContent.trim() && (
+                <p className="text-sm text-neutral-600 dark:text-neutral-300">
+                  {editContent.trim().split(/\s+/).length} words
+                </p>
+              )}
+              <div className="flex items-center gap-4 ml-auto">
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="text-base text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="text-base text-neutral-700 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white transition-colors"
+                >
+                  Save
+                </button>
+              </div>
             </div>
           </div>
         ) : (
           <div
-            onClick={handleStartEditing}
-            className="cursor-text min-h-[100px]"
-          >
-            <LogbookEditor
-              key={`view-${editorKey}`}
-              value={parsedContent}
-              onChange={() => {}}
-              readOnly
-            />
-          </div>
+            onClick={() => setIsEditing(true)}
+            className="prose prose-lg prose-neutral dark:prose-invert max-w-none cursor-text prose-p:text-neutral-800 dark:prose-p:text-neutral-200 prose-p:leading-relaxed prose-headings:text-neutral-900 dark:prose-headings:text-white"
+            dangerouslySetInnerHTML={{ __html: sanitizeHTML(entry.content) }}
+          />
         )}
 
         {/* Actions */}
         {!isEditing && (
           <div className="flex items-center gap-4 pt-4">
             <button
-              onClick={handleStartEditing}
+              onClick={() => setIsEditing(true)}
               className="text-base text-neutral-600 hover:text-neutral-800 dark:text-neutral-300 dark:hover:text-neutral-100 transition-colors"
             >
               Edit
@@ -230,76 +173,9 @@ const EntryPage: React.FC = () => {
         )}
       </div>
 
-      {/* AI Summary Section */}
+      {/* AI Mentor */}
       <div className="border-t border-neutral-100 dark:border-neutral-900 pt-8">
-        <div className="space-y-4">
-          {!summary && !isSummarizing && isAPIConfigured() && (
-            <button
-              onClick={handleSummarize}
-              disabled={isSummarizing}
-              className="text-base text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Summarize with learnings
-            </button>
-          )}
-
-          {!isAPIConfigured() && (
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              API key not configured. Add VITE_ANTHROPIC_API_KEY to enable AI summaries.
-            </p>
-          )}
-
-          {isSummarizing && (
-            <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400">
-              <div className="flex gap-1">
-                <span className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-              <span className="text-sm">Generating summary...</span>
-            </div>
-          )}
-
-          {summaryError && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-              <p className="text-sm text-red-600 dark:text-red-400">{summaryError}</p>
-              <button
-                onClick={handleSummarize}
-                className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 underline mt-2"
-              >
-                Try again
-              </button>
-            </div>
-          )}
-
-          {summary && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-neutral-600 dark:text-neutral-300 uppercase tracking-wider">
-                  Summary & Learnings
-                </h3>
-                <button
-                  onClick={() => setSummary(null)}
-                  className="text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
-                >
-                  Clear
-                </button>
-              </div>
-              <div className="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-lg">
-                <p className="text-base text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed">
-                  {summary}
-                </p>
-              </div>
-              <button
-                onClick={handleSummarize}
-                disabled={isSummarizing}
-                className="text-sm text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300 transition-colors disabled:opacity-50"
-              >
-                Regenerate
-              </button>
-            </div>
-          )}
-        </div>
+        <MentorChat entry={entry} />
       </div>
     </div>
   );
