@@ -1,4 +1,39 @@
+// Parse Yoopta JSON content format to plain text
+const parseYooptaContent = (content: string): string | null => {
+  try {
+    // Check if content looks like Yoopta JSON (starts with { and has block structure)
+    if (!content.trim().startsWith('{')) return null;
+
+    const parsed = JSON.parse(content);
+    const texts: string[] = [];
+
+    // Yoopta format: { "block-id": { id, type, value: [{ id, type, children: [{ text }] }] } }
+    for (const key of Object.keys(parsed)) {
+      const block = parsed[key];
+      if (block?.value && Array.isArray(block.value)) {
+        for (const item of block.value) {
+          if (item?.children && Array.isArray(item.children)) {
+            for (const child of item.children) {
+              if (child?.text) {
+                texts.push(child.text);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return texts.length > 0 ? texts.join('\n') : null;
+  } catch {
+    return null;
+  }
+};
+
 export const stripHtml = (html: string): string => {
+  // First try to parse as Yoopta JSON content
+  const yooptaText = parseYooptaContent(html);
+  if (yooptaText) return yooptaText;
+
   // Remove HTML tags and decode entities
   return html
     // Replace <br>, <p>, </p> with newlines for proper text flow

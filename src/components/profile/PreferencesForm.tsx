@@ -8,6 +8,9 @@ import {
   FOCUS_AREA_OPTIONS,
   FRAMEWORK_OPTIONS,
 } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 interface PreferencesFormProps {
   onSaved?: () => void;
@@ -61,9 +64,9 @@ export const PreferencesForm: React.FC<PreferencesFormProps> = ({ onSaved }) => 
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded" />
-        <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded" />
-        <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded" />
+        <div className="h-10 bg-muted rounded" />
+        <div className="h-10 bg-muted rounded" />
+        <div className="h-10 bg-muted rounded" />
       </div>
     );
   }
@@ -71,22 +74,21 @@ export const PreferencesForm: React.FC<PreferencesFormProps> = ({ onSaved }) => 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Mentor Tone */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          Mentor Tone
-        </label>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+      <div className="space-y-3">
+        <Label>Mentor Tone</Label>
+        <p className="text-sm text-muted-foreground">
           How should your AI mentor communicate with you?
         </p>
         <div className="space-y-2">
           {MENTOR_TONE_OPTIONS.map((option) => (
             <label
               key={option.value}
-              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+              className={cn(
+                "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
                 formData.mentorTone === option.value
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
-              }`}
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:bg-accent'
+              )}
             >
               <input
                 type="radio"
@@ -102,10 +104,8 @@ export const PreferencesForm: React.FC<PreferencesFormProps> = ({ onSaved }) => 
                 className="mt-0.5"
               />
               <div>
-                <span className="font-medium text-slate-900 dark:text-white">
-                  {option.label}
-                </span>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="font-medium">{option.label}</span>
+                <p className="text-sm text-muted-foreground">
                   {option.description}
                 </p>
               </div>
@@ -115,118 +115,96 @@ export const PreferencesForm: React.FC<PreferencesFormProps> = ({ onSaved }) => 
       </div>
 
       {/* Response Length */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          Response Length
-        </label>
+      <div className="space-y-3">
+        <Label>Response Length</Label>
         <div className="flex gap-2">
           {RESPONSE_LENGTH_OPTIONS.map((option) => (
-            <button
+            <Button
               key={option.value}
               type="button"
+              variant={formData.responseLength === option.value ? 'default' : 'outline'}
+              className="flex-1"
               onClick={() =>
                 setFormData((prev) => ({ ...prev, responseLength: option.value }))
               }
-              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                formData.responseLength === option.value
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-              }`}
             >
               {option.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
       {/* Question Frequency */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          Question Frequency
-        </label>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+      <div className="space-y-3">
+        <Label>Question Frequency</Label>
+        <p className="text-sm text-muted-foreground">
           How often should the mentor ask you questions?
         </p>
         <div className="flex gap-2">
           {QUESTION_FREQUENCY_OPTIONS.map((option) => (
-            <button
+            <Button
               key={option.value}
               type="button"
+              variant={formData.questionFrequency === option.value ? 'default' : 'outline'}
+              className="flex-1"
               onClick={() =>
                 setFormData((prev) => ({ ...prev, questionFrequency: option.value }))
               }
-              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                formData.questionFrequency === option.value
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-              }`}
             >
               {option.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
       {/* Focus Areas */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          Focus Areas
-        </label>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+      <div className="space-y-3">
+        <Label>Focus Areas</Label>
+        <p className="text-sm text-muted-foreground">
           Select areas you want the mentor to emphasize
         </p>
         <div className="flex flex-wrap gap-2">
           {FOCUS_AREA_OPTIONS.map((area) => (
-            <button
+            <Button
               key={area}
               type="button"
+              variant={formData.focusAreas.includes(area) ? 'default' : 'outline'}
+              size="sm"
+              className="rounded-full"
               onClick={() => toggleArrayItem('focusAreas', area)}
-              className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                formData.focusAreas.includes(area)
-                  ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-              }`}
             >
               {area.replace('-', ' ')}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
       {/* Frameworks */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          Preferred Frameworks
-        </label>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+      <div className="space-y-3">
+        <Label>Preferred Frameworks</Label>
+        <p className="text-sm text-muted-foreground">
           Mental models the mentor can reference
         </p>
         <div className="flex flex-wrap gap-2">
           {FRAMEWORK_OPTIONS.map((framework) => (
-            <button
+            <Button
               key={framework}
               type="button"
+              variant={formData.frameworks.includes(framework) ? 'default' : 'outline'}
+              size="sm"
+              className="rounded-full"
               onClick={() => toggleArrayItem('frameworks', framework)}
-              className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                formData.frameworks.includes(framework)
-                  ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-              }`}
             >
               {framework}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
       {/* Submit */}
-      <button
-        type="submit"
-        disabled={isSaving}
-        className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
+      <Button type="submit" className="w-full" disabled={isSaving}>
         {isSaving ? 'Saving...' : 'Save Preferences'}
-      </button>
+      </Button>
     </form>
   );
 };
