@@ -8,6 +8,12 @@ export interface AIMessage {
   timestamp: Date;
 }
 
+export interface EntryImage {
+  id: string;
+  dataUrl: string;
+  createdAt: Date;
+}
+
 export interface Entry {
   id?: string;
   content: string;
@@ -16,6 +22,7 @@ export interface Entry {
   createdAt: Date;
   updatedAt: Date;
   aiConversation: AIMessage[];
+  images?: EntryImage[];
 }
 
 // Profile types

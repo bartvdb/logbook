@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import {
   Entry,
+  EntryImage,
   Profile,
   Preferences,
   Settings,
@@ -177,7 +178,7 @@ export const syncFromCloud = async (): Promise<void> => {
 // Data Service - unified interface for all data operations
 export const dataService = {
   // Entry operations
-  async createEntry(content: string, tags: string[] = [], mood?: Entry['mood']): Promise<Entry> {
+  async createEntry(content: string, tags: string[] = [], mood?: Entry['mood'], images?: EntryImage[]): Promise<Entry> {
     const entry: Entry = {
       id: uuidv4(),
       content,
@@ -186,6 +187,7 @@ export const dataService = {
       createdAt: new Date(),
       updatedAt: new Date(),
       aiConversation: [],
+      images: images || [],
     };
 
     // Always save to local first

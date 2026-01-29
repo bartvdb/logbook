@@ -8,7 +8,7 @@ import {
 } from '@/lib/db';
 import { dataService, getSyncStatus, onSyncStatusChange } from '@/lib/dataService';
 import { searchService } from '@/lib/search';
-import { Entry, SearchFilters, SearchResult } from '@/types';
+import { Entry, EntryImage, SearchFilters, SearchResult } from '@/types';
 
 export const useEntries = () => {
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -49,8 +49,8 @@ export const useEntries = () => {
   }, [localEntries]);
 
   const create = useCallback(
-    async (content: string, tags: string[] = [], mood?: Entry['mood']) => {
-      const entry = await dataService.createEntry(content, tags, mood);
+    async (content: string, tags: string[] = [], mood?: Entry['mood'], images?: EntryImage[]) => {
+      const entry = await dataService.createEntry(content, tags, mood, images);
       searchService.indexEntry(entry);
       // Refresh the list
       await fetchEntries();
