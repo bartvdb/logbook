@@ -21,9 +21,9 @@ const getFormattedDate = () => {
 };
 
 const navItems: NavItem[] = [
-  { path: '/', label: 'Today', icon: <BookOpen className="h-5 w-5" /> },
-  { path: '/entries', label: 'Entries', icon: <List className="h-5 w-5" /> },
-  { path: '/trends', label: 'Trends', icon: <TrendingUp className="h-5 w-5" /> },
+  { path: '/', label: 'New', icon: <BookOpen className="h-5 w-5" /> },
+  { path: '/entries', label: 'Notes', icon: <List className="h-5 w-5" /> },
+  { path: '/trends', label: 'Insights', icon: <TrendingUp className="h-5 w-5" /> },
   { path: '/profile', label: 'Profile', icon: <User className="h-5 w-5" /> },
 ];
 
@@ -79,7 +79,7 @@ export const Navigation: React.FC<NavigationProps> = ({ isCollapsed = false, onT
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center justify-between h-14 px-5">
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-medium">Logbook</h1>
+              <h1 className="text-base font-medium">Clearspace</h1>
               <SyncDot />
             </div>
             <Button
@@ -153,7 +153,7 @@ export const Navigation: React.FC<NavigationProps> = ({ isCollapsed = false, onT
       <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b">
         <div className="flex items-center justify-center h-12 px-4 relative">
           <h1 className="text-sm font-medium">
-            {navItems.find((item) => item.path === location.pathname)?.label || 'Logbook'}
+            {navItems.find((item) => item.path === location.pathname)?.label || 'Clearspace'}
             {location.pathname === '/' && (
               <span className="ml-2 text-muted-foreground font-normal">
                 {getFormattedDate()}
