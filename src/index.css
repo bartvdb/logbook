@@ -46,6 +46,7 @@
     --chart-4: 25 65% 60%;
     --chart-5: 15 80% 55%;
     --radius: 0.5rem;
+    --sidebar: 30 25% 98%;
   }
   .dark {
     --background: 20 14% 8%;

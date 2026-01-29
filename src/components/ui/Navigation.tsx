@@ -72,7 +72,7 @@ export const Navigation: React.FC<NavigationProps> = ({ isCollapsed = false, onT
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          "hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 bg-background border-r transition-all duration-200",
+          "hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 bg-sidebar border-r transition-all duration-200",
           isCollapsed ? 'lg:w-0 lg:overflow-hidden lg:border-r-0' : 'lg:w-56'
         )}
       >
