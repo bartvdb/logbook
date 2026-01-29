@@ -115,7 +115,7 @@ const EntryPage: React.FC = () => {
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full min-h-[200px] border-0 bg-transparent text-foreground text-[20px] leading-relaxed resize-none focus-visible:ring-0 shadow-none p-0"
+              className="w-full min-h-[200px] border-0 bg-transparent text-foreground !text-[20px] !leading-[33px] resize-none focus-visible:ring-0 shadow-none p-0"
               rows={5}
             />
             <div className="flex justify-end gap-2">
@@ -128,7 +128,7 @@ const EntryPage: React.FC = () => {
         ) : (
           <div
             onClick={() => setIsEditing(true)}
-            className="cursor-text text-foreground text-[20px] leading-relaxed whitespace-pre-wrap"
+            className="cursor-text text-foreground text-[20px] leading-[33px] whitespace-pre-wrap"
           >
             {entry.content}
           </div>
