@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { Download } from 'lucide-react';
-import { useTheme, usePWA } from '@/hooks';
+import { usePWA } from '@/hooks';
 import { exportAllData } from '@/lib/db';
 import JSZip from 'jszip';
 import { Entry } from '@/types';
 import { formatDate } from '@/utils/date';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 
 const SettingsPage: React.FC = () => {
-  const { theme, setTheme } = useTheme();
   const { canBeInstalled, isInstalled, install } = usePWA();
   const [isExporting, setIsExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
@@ -95,30 +93,6 @@ const SettingsPage: React.FC = () => {
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-muted-foreground">Manage your app preferences</p>
       </div>
-
-      {/* Theme */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Appearance</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label>Theme</Label>
-            <div className="flex gap-2">
-              {(['light', 'dark', 'auto'] as const).map((option) => (
-                <Button
-                  key={option}
-                  variant={theme === option ? 'default' : 'outline'}
-                  className="flex-1 capitalize"
-                  onClick={() => setTheme(option)}
-                >
-                  {option}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Install PWA */}
       {!isInstalled && canBeInstalled && (

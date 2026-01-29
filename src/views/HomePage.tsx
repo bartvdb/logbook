@@ -56,6 +56,15 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Fixed save button in top-right corner */}
+      {content.trim() && (
+        <div className="fixed top-4 right-4 z-50">
+          <Button onClick={handleSave}>
+            Save
+          </Button>
+        </div>
+      )}
+
       <div className="flex-1 flex flex-col lg:justify-center">
         <div className="lg:max-h-[80vh] lg:overflow-auto">
           <Textarea
@@ -69,14 +78,6 @@ const HomePage: React.FC = () => {
           />
         </div>
       </div>
-
-      {content.trim() && (
-        <div className="flex justify-end py-4">
-          <Button onClick={handleSave}>
-            Save
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
