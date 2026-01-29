@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { BookOpen, List, TrendingUp, User, Settings, PanelLeft } from 'lucide-react';
+import { PenLine, NotebookText, TrendingUp, User, Settings, PanelLeft } from 'lucide-react';
 import { useOnlineStatus, useSyncStatus } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -21,8 +21,8 @@ const getFormattedDate = () => {
 };
 
 const navItems: NavItem[] = [
-  { path: '/', label: 'New', icon: <BookOpen className="h-5 w-5" /> },
-  { path: '/entries', label: 'Notes', icon: <List className="h-5 w-5" /> },
+  { path: '/', label: 'New', icon: <PenLine className="h-5 w-5" /> },
+  { path: '/entries', label: 'Notes', icon: <NotebookText className="h-5 w-5" /> },
   { path: '/trends', label: 'Insights', icon: <TrendingUp className="h-5 w-5" /> },
   { path: '/profile', label: 'Profile', icon: <User className="h-5 w-5" /> },
 ];
