@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { BookOpen, List, TrendingUp, User, Settings, Menu, X } from 'lucide-react';
+import { BookOpen, List, TrendingUp, User, Settings, PanelLeft } from 'lucide-react';
 import { useOnlineStatus, useSyncStatus } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -89,7 +89,7 @@ export const Navigation: React.FC<NavigationProps> = ({ isCollapsed = false, onT
               onClick={onToggleCollapse}
               title="Hide sidebar"
             >
-              <X className="h-4 w-4" />
+              <PanelLeft className="h-4 w-4" />
             </Button>
           </div>
           <nav className="flex-1 px-3 py-2 space-y-1">
@@ -145,7 +145,7 @@ export const Navigation: React.FC<NavigationProps> = ({ isCollapsed = false, onT
           onClick={onToggleCollapse}
           title="Show sidebar"
         >
-          <Menu className="h-4 w-4" />
+          <PanelLeft className="h-4 w-4" />
         </Button>
       )}
 
