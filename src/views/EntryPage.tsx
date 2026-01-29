@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Pencil, Trash2 } from 'lucide-react';
+import { ChevronLeft, Trash2 } from 'lucide-react';
 import { useEntry, useEntries } from '@/hooks';
 import { MentorChat } from '@/components/mentor';
 import { formatTime } from '@/utils/date';
@@ -115,7 +115,7 @@ const EntryPage: React.FC = () => {
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full min-h-[200px] border-0 bg-transparent text-[20px] leading-relaxed resize-none focus-visible:ring-0 shadow-none"
+              className="w-full min-h-[200px] border-0 bg-transparent text-foreground text-[20px] leading-relaxed resize-none focus-visible:ring-0 shadow-none p-0"
               rows={5}
             />
             <div className="flex justify-end gap-2">
@@ -128,7 +128,7 @@ const EntryPage: React.FC = () => {
         ) : (
           <div
             onClick={() => setIsEditing(true)}
-            className="prose prose-lg dark:prose-invert max-w-none cursor-text text-[20px] leading-relaxed whitespace-pre-wrap"
+            className="cursor-text text-foreground text-[20px] leading-relaxed whitespace-pre-wrap"
           >
             {entry.content}
           </div>
@@ -136,15 +136,6 @@ const EntryPage: React.FC = () => {
 
         {!isEditing && (
           <div className="flex items-center gap-2 pt-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => setIsEditing(true)}
-            >
-              <Pencil className="h-4 w-4" />
-              Edit
-            </Button>
             <Button
               variant="ghost"
               size="sm"

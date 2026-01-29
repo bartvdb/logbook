@@ -47,18 +47,30 @@ const HomePage: React.FC = () => {
     navigate(`/entry/${entry.id}`);
   }, [content, create, navigate, setFocusMode]);
 
+  const handleCancel = useCallback(() => {
+    setContent('');
+    setFocusMode(false);
+    textareaRef.current?.focus();
+  }, [setFocusMode]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
       handleSave();
     }
+    if (e.key === 'Escape') {
+      handleCancel();
+    }
   };
 
   return (
     <div className="flex flex-col h-full">
-      {/* Fixed save button in top-right corner */}
+      {/* Fixed buttons in top-right corner */}
       {content.trim() && (
-        <div className="fixed top-4 right-4 z-50">
+        <div className="fixed top-4 right-4 z-50 flex gap-2">
+          <Button variant="ghost" onClick={handleCancel}>
+            Cancel
+          </Button>
           <Button onClick={handleSave}>
             Save
           </Button>
@@ -73,7 +85,7 @@ const HomePage: React.FC = () => {
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Start writing..."
-            className="w-full min-h-[120px] border-0 bg-transparent text-[18px] leading-relaxed resize-none focus-visible:ring-0 shadow-none placeholder:text-muted-foreground"
+            className="w-full min-h-[120px] border-0 bg-transparent text-foreground text-[20px] leading-relaxed resize-none focus-visible:ring-0 shadow-none p-0 placeholder:text-muted-foreground"
             rows={1}
           />
         </div>
