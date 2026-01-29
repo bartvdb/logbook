@@ -16,6 +16,12 @@ export const isSupabaseConfigured = (): boolean => {
 };
 
 // Database types matching Supabase schema
+export interface DbEntryImage {
+  id: string;
+  dataUrl: string;
+  createdAt: string;
+}
+
 export interface DbEntry {
   id: string;
   content: string;
@@ -27,6 +33,7 @@ export interface DbEntry {
     content: string;
     timestamp: string;
   }>;
+  images?: DbEntryImage[];
   created_at: string;
   updated_at: string;
 }

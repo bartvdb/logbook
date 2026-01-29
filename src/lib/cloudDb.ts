@@ -1,5 +1,25 @@
-import { supabase, isSupabaseConfigured, DbEntry, DbProfile, DbPreferences, DbSettings } from './supabase';
-import { Entry, Profile, Preferences, Settings, AIMessage, Mood } from '@/types';
+import { supabase, isSupabaseConfigured, DbEntry, DbEntryImage, DbProfile, DbPreferences, DbSettings } from './supabase';
+import { Entry, EntryImage, Profile, Preferences, Settings, AIMessage, Mood } from '@/types';
+
+// Convert images from app to DB format
+const imagesToDb = (images?: EntryImage[]): DbEntryImage[] | undefined => {
+  if (!images || images.length === 0) return undefined;
+  return images.map(img => ({
+    id: img.id,
+    dataUrl: img.dataUrl,
+    createdAt: img.createdAt instanceof Date ? img.createdAt.toISOString() : img.createdAt,
+  }));
+};
+
+// Convert images from DB to app format
+const dbToImages = (images?: DbEntryImage[]): EntryImage[] => {
+  if (!images || images.length === 0) return [];
+  return images.map(img => ({
+    id: img.id,
+    dataUrl: img.dataUrl,
+    createdAt: new Date(img.createdAt),
+  }));
+};
 
 // Convert from app types (camelCase) to database types (snake_case)
 const entryToDb = (entry: Entry): Omit<DbEntry, 'created_at' | 'updated_at'> & { created_at?: string; updated_at?: string } => ({
@@ -11,6 +31,7 @@ const entryToDb = (entry: Entry): Omit<DbEntry, 'created_at' | 'updated_at'> & {
     ...msg,
     timestamp: msg.timestamp instanceof Date ? msg.timestamp.toISOString() : msg.timestamp,
   })),
+  images: imagesToDb(entry.images),
   created_at: entry.createdAt instanceof Date ? entry.createdAt.toISOString() : undefined,
   updated_at: entry.updatedAt instanceof Date ? entry.updatedAt.toISOString() : undefined,
 });
@@ -25,6 +46,7 @@ const dbToEntry = (dbEntry: DbEntry): Entry => ({
     ...msg,
     timestamp: new Date(msg.timestamp),
   })),
+  images: dbToImages(dbEntry.images),
   createdAt: new Date(dbEntry.created_at),
   updatedAt: new Date(dbEntry.updated_at),
 });
@@ -104,6 +126,7 @@ export const cloudDb = {
         tags: dbEntry.tags,
         mood: dbEntry.mood,
         ai_conversation: dbEntry.ai_conversation,
+        images: dbEntry.images,
       })
       .select()
       .single();
@@ -165,6 +188,9 @@ export const cloudDb = {
         ...msg,
         timestamp: msg.timestamp instanceof Date ? msg.timestamp.toISOString() : msg.timestamp,
       }));
+    }
+    if (updates.images !== undefined) {
+      dbUpdates.images = imagesToDb(updates.images);
     }
 
     const { error } = await supabase
