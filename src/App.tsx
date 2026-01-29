@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Navigation } from '@/components/ui';
 import { useTheme, useBackgroundSync } from '@/hooks';
+import { FocusModeProvider, useFocusMode } from '@/contexts';
 
 // Views
 import HomePage from '@/views/HomePage';
@@ -13,26 +14,14 @@ import NewEntryPage from '@/views/NewEntryPage';
 import TrendsPage from '@/views/TrendsPage';
 import DesignSystemPage from '@/views/DesignSystemPage';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   // Apply theme
   useTheme();
 
   // Start background sync for AI queue
   useBackgroundSync();
 
-  // Sidebar collapse state
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
-    const saved = localStorage.getItem('sidebar-collapsed');
-    return saved === 'true';
-  });
-
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed(prev => {
-      const newValue = !prev;
-      localStorage.setItem('sidebar-collapsed', String(newValue));
-      return newValue;
-    });
-  };
+  const { isSidebarCollapsed, toggleSidebar } = useFocusMode();
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -75,6 +64,14 @@ const App: React.FC = () => {
         </div>
       </main>
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <FocusModeProvider>
+      <AppContent />
+    </FocusModeProvider>
   );
 };
 

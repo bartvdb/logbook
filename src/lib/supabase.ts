@@ -50,6 +50,13 @@ export interface DbProfile {
   updated_at: string;
 }
 
+export interface DbKnowledgeFile {
+  id: string;
+  name: string;
+  content: string;
+  createdAt: string;
+}
+
 export interface DbPreferences {
   id: string;
   mentor_tone: string;
@@ -58,6 +65,7 @@ export interface DbPreferences {
   question_frequency: string;
   frameworks: string[];
   custom_instructions: string;
+  knowledge_files?: DbKnowledgeFile[];
   updated_at: string;
 }
 

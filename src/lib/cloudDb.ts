@@ -1,5 +1,5 @@
-import { supabase, isSupabaseConfigured, DbEntry, DbEntryImage, DbProfile, DbPreferences, DbSettings } from './supabase';
-import { Entry, EntryImage, Profile, Preferences, Settings, AIMessage, Mood } from '@/types';
+import { supabase, isSupabaseConfigured, DbEntry, DbEntryImage, DbProfile, DbPreferences, DbSettings, DbKnowledgeFile } from './supabase';
+import { Entry, EntryImage, Profile, Preferences, Settings, AIMessage, Mood, KnowledgeFile } from '@/types';
 
 // Convert images from app to DB format
 const imagesToDb = (images?: EntryImage[]): DbEntryImage[] | undefined => {
@@ -75,6 +75,28 @@ const dbToProfile = (dbProfile: DbProfile): Profile => ({
   updatedAt: new Date(dbProfile.updated_at),
 });
 
+// Convert knowledge files from app to DB format
+const knowledgeFilesToDb = (files?: KnowledgeFile[]): DbKnowledgeFile[] | undefined => {
+  if (!files || files.length === 0) return undefined;
+  return files.map(f => ({
+    id: f.id,
+    name: f.name,
+    content: f.content,
+    createdAt: f.createdAt instanceof Date ? f.createdAt.toISOString() : f.createdAt,
+  }));
+};
+
+// Convert knowledge files from DB to app format
+const dbToKnowledgeFiles = (files?: DbKnowledgeFile[]): KnowledgeFile[] => {
+  if (!files || files.length === 0) return [];
+  return files.map(f => ({
+    id: f.id,
+    name: f.name,
+    content: f.content,
+    createdAt: new Date(f.createdAt),
+  }));
+};
+
 const preferencesToDb = (prefs: Partial<Preferences>): Partial<DbPreferences> => ({
   id: prefs.id,
   mentor_tone: prefs.mentorTone,
@@ -83,6 +105,7 @@ const preferencesToDb = (prefs: Partial<Preferences>): Partial<DbPreferences> =>
   question_frequency: prefs.questionFrequency,
   frameworks: prefs.frameworks,
   custom_instructions: prefs.customInstructions,
+  knowledge_files: knowledgeFilesToDb(prefs.knowledgeFiles),
   updated_at: prefs.updatedAt instanceof Date ? prefs.updatedAt.toISOString() : undefined,
 });
 
@@ -94,6 +117,7 @@ const dbToPreferences = (dbPrefs: DbPreferences): Preferences => ({
   questionFrequency: (dbPrefs.question_frequency || 'moderate') as Preferences['questionFrequency'],
   frameworks: dbPrefs.frameworks || [],
   customInstructions: dbPrefs.custom_instructions || '',
+  knowledgeFiles: dbToKnowledgeFiles(dbPrefs.knowledge_files),
   updatedAt: new Date(dbPrefs.updated_at),
 });
 

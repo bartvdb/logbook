@@ -43,6 +43,13 @@ export type MentorTone = 'supportive' | 'challenging' | 'balanced' | 'direct' | 
 export type ResponseLength = 'concise' | 'moderate' | 'detailed';
 export type QuestionFrequency = 'high' | 'moderate' | 'low';
 
+export interface KnowledgeFile {
+  id: string;
+  name: string;
+  content: string; // Extracted text content from PDF
+  createdAt: Date;
+}
+
 export interface Preferences {
   id: 'user-preferences';
   mentorTone: MentorTone;
@@ -51,6 +58,7 @@ export interface Preferences {
   questionFrequency: QuestionFrequency;
   frameworks: string[];
   customInstructions: string;
+  knowledgeFiles?: KnowledgeFile[];
   updatedAt: Date;
 }
 
@@ -130,6 +138,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   questionFrequency: 'moderate',
   frameworks: [],
   customInstructions: '',
+  knowledgeFiles: [],
   updatedAt: new Date(),
 };
 

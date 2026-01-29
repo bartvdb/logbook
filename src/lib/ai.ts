@@ -65,6 +65,10 @@ Communication preferences:
 ${preferences.frameworks.length > 0 ? `- When relevant, consider these frameworks: ${preferences.frameworks.join(', ')}` : ''}
 
 ${preferences.customInstructions ? `Custom instructions:\n${preferences.customInstructions}\n` : ''}
+${preferences.knowledgeFiles && preferences.knowledgeFiles.length > 0 ? `
+Knowledge context from uploaded documents:
+${preferences.knowledgeFiles.map(f => `--- ${f.name} ---\n${f.content.slice(0, 5000)}${f.content.length > 5000 ? '\n...(truncated)' : ''}`).join('\n\n')}
+` : ''}
 ${historyContext}
 User's journal entry:
 ${entry.content}

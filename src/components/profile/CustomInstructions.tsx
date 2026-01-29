@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { FileText, Upload, X, Loader2 } from 'lucide-react';
 import { usePreferences } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { KnowledgeFile } from '@/types';
+
+// Maximum character limit for custom instructions
+const MAX_CHARACTERS = 10000;
 
 interface CustomInstructionsProps {
   onSaved?: () => void;
@@ -12,22 +17,72 @@ interface CustomInstructionsProps {
 export const CustomInstructions: React.FC<CustomInstructionsProps> = ({ onSaved }) => {
   const { preferences, update, isLoading } = usePreferences();
   const [instructions, setInstructions] = useState('');
+  const [knowledgeFiles, setKnowledgeFiles] = useState<KnowledgeFile[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (preferences?.customInstructions) {
       setInstructions(preferences.customInstructions);
     }
-  }, [preferences?.customInstructions]);
+    if (preferences?.knowledgeFiles) {
+      setKnowledgeFiles(preferences.knowledgeFiles);
+    }
+  }, [preferences?.customInstructions, preferences?.knowledgeFiles]);
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await update({ customInstructions: instructions });
+      await update({ customInstructions: instructions, knowledgeFiles });
       onSaved?.();
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    for (const file of Array.from(files)) {
+      if (file.type !== 'application/pdf') {
+        setUploadError('Only PDF files are supported');
+        continue;
+      }
+
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError('File size must be less than 5MB');
+        continue;
+      }
+
+      try {
+        const text = await extractTextFromPDF(file);
+        const newFile: KnowledgeFile = {
+          id: `pdf-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          name: file.name,
+          content: text,
+          createdAt: new Date(),
+        };
+        setKnowledgeFiles(prev => [...prev, newFile]);
+      } catch (error) {
+        console.error('Failed to process PDF:', error);
+        setUploadError('Failed to extract text from PDF. Please try a different file.');
+      }
+    }
+
+    setIsUploading(false);
+    // Reset input
+    e.target.value = '';
+  };
+
+  const removeFile = (id: string) => {
+    setKnowledgeFiles(prev => prev.filter(f => f.id !== id));
   };
 
   if (isLoading) {
@@ -37,6 +92,8 @@ export const CustomInstructions: React.FC<CustomInstructionsProps> = ({ onSaved 
       </div>
     );
   }
+
+  const totalKnowledgeChars = knowledgeFiles.reduce((sum, f) => sum + f.content.length, 0);
 
   return (
     <div className="space-y-4">
@@ -55,17 +112,101 @@ export const CustomInstructions: React.FC<CustomInstructionsProps> = ({ onSaved 
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
           placeholder="e.g., I'm currently transitioning from engineering to management. Please help me develop leadership skills while staying technical. Avoid generic advice - I prefer actionable insights based on first principles thinking."
-          rows={6}
+          rows={8}
           className="resize-none"
         />
-        <p className="text-xs text-muted-foreground">
-          {instructions.length}/1000 characters
+        <p className={`text-xs ${instructions.length > MAX_CHARACTERS ? 'text-destructive' : 'text-muted-foreground'}`}>
+          {instructions.length.toLocaleString()}/{MAX_CHARACTERS.toLocaleString()} characters
         </p>
       </div>
 
+      {/* Knowledge Files Section */}
+      <Separator />
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <Label>Knowledge Files</Label>
+            <p className="text-sm text-muted-foreground mt-1">
+              Upload PDF documents to give your AI mentor additional context and knowledge.
+            </p>
+          </div>
+        </div>
+
+        {/* Uploaded files list */}
+        {knowledgeFiles.length > 0 && (
+          <div className="space-y-2">
+            {knowledgeFiles.map((file) => (
+              <div
+                key={file.id}
+                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileText className="w-5 h-5 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {file.content.length.toLocaleString()} characters extracted
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={() => removeFile(file.id)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+            <p className="text-xs text-muted-foreground">
+              Total knowledge: {totalKnowledgeChars.toLocaleString()} characters from {knowledgeFiles.length} file(s)
+            </p>
+          </div>
+        )}
+
+        {/* Upload button */}
+        <div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf"
+            multiple
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="gap-2"
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                Upload PDF
+              </>
+            )}
+          </Button>
+          <p className="text-xs text-muted-foreground mt-2">
+            Max 5MB per file. Text will be extracted from the PDF.
+          </p>
+          {uploadError && (
+            <p className="text-xs text-destructive mt-1">{uploadError}</p>
+          )}
+        </div>
+      </div>
+
+      <Separator />
+
       <Button
         onClick={handleSave}
-        disabled={isSaving || instructions.length > 1000}
+        disabled={isSaving || instructions.length > MAX_CHARACTERS}
         className="w-full"
       >
         {isSaving ? 'Saving...' : 'Save Instructions'}
@@ -123,5 +264,36 @@ const ExampleInstruction: React.FC<ExampleInstructionProps> = ({
     <p className="text-xs text-muted-foreground">{text}</p>
   </div>
 );
+
+// Helper function to extract text from PDF
+async function extractTextFromPDF(file: File): Promise<string> {
+  // Use pdf.js to extract text
+  const pdfjsLib = await import('pdfjs-dist');
+
+  // Set worker source
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  let fullText = '';
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items
+      .map((item) => {
+        // TextItem has str property, TextMarkedContent does not
+        if ('str' in item) {
+          return (item as { str: string }).str;
+        }
+        return '';
+      })
+      .join(' ');
+    fullText += pageText + '\n\n';
+  }
+
+  return fullText.trim();
+}
 
 export default CustomInstructions;
