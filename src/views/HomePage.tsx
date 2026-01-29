@@ -65,9 +65,9 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Fixed buttons in top-right corner */}
+      {/* Fixed buttons in top-right corner - desktop only */}
       {content.trim() && (
-        <div className="fixed top-4 right-4 z-50 flex gap-2">
+        <div className="hidden lg:flex fixed top-4 right-4 z-50 gap-2">
           <Button variant="ghost" onClick={handleCancel}>
             Cancel
           </Button>
@@ -90,6 +90,18 @@ const HomePage: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* Buttons below form - mobile only */}
+      {content.trim() && (
+        <div className="flex lg:hidden justify-end gap-2 pt-4">
+          <Button variant="ghost" onClick={handleCancel}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave}>
+            Save
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
