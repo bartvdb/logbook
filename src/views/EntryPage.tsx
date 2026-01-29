@@ -2,10 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Pencil, Trash2 } from 'lucide-react';
 import { useEntry, useEntries } from '@/hooks';
-import { EntryImage } from '@/types';
 import { MentorChat } from '@/components/mentor';
-import { ImageUpload } from '@/components/entry/ImageUpload';
-import { EntryContent } from '@/components/entry/EntryContent';
 import { formatTime } from '@/utils/date';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,7 +15,6 @@ const EntryPage: React.FC = () => {
   const { update, remove } = useEntries();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
-  const [editImages, setEditImages] = useState<EntryImage[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -39,16 +35,15 @@ const EntryPage: React.FC = () => {
       } else {
         setEditContent(entry.content);
       }
-      setEditImages(entry.images || []);
     }
   }, [entry]);
 
   const handleSave = useCallback(async () => {
     if (id && editContent.trim()) {
-      await update(id, { content: editContent, images: editImages });
+      await update(id, { content: editContent });
       setIsEditing(false);
     }
-  }, [id, editContent, editImages, update]);
+  }, [id, editContent, update]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
@@ -66,28 +61,6 @@ const EntryPage: React.FC = () => {
       navigate('/entries');
     }
   }, [id, remove, navigate]);
-
-  const handleImageAdd = (image: EntryImage, placeholder: string) => {
-    setEditImages(prev => [...prev, image]);
-    // Insert placeholder at cursor position or end
-    if (textareaRef.current) {
-      const start = textareaRef.current.selectionStart;
-      const end = textareaRef.current.selectionEnd;
-      const newContent = editContent.slice(0, start) + placeholder + editContent.slice(end);
-      setEditContent(newContent);
-      // Move cursor after placeholder
-      setTimeout(() => {
-        if (textareaRef.current) {
-          const newPos = start + placeholder.length;
-          textareaRef.current.selectionStart = newPos;
-          textareaRef.current.selectionEnd = newPos;
-          textareaRef.current.focus();
-        }
-      }, 0);
-    } else {
-      setEditContent(prev => prev + placeholder);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -118,9 +91,6 @@ const EntryPage: React.FC = () => {
     year: 'numeric',
   });
 
-  const wordCount = editContent.trim() ? editContent.trim().split(/\s+/).length : 0;
-  const imageCount = editImages.length;
-
   return (
     <div className="space-y-8">
       <Button
@@ -148,29 +118,19 @@ const EntryPage: React.FC = () => {
               className="w-full min-h-[200px] border-0 bg-transparent text-[20px] leading-relaxed resize-none focus-visible:ring-0 shadow-none"
               rows={5}
             />
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ImageUpload onImageAdd={handleImageAdd} />
-                <p className="text-sm text-muted-foreground">
-                  {wordCount} {wordCount === 1 ? 'word' : 'words'}
-                  {imageCount > 0 && ` · ${imageCount} ${imageCount === 1 ? 'photo' : 'photos'}`}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" onClick={() => setIsEditing(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSave}>Save</Button>
-              </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setIsEditing(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave}>Save</Button>
             </div>
           </div>
         ) : (
           <div
             onClick={() => setIsEditing(true)}
-            className="prose prose-lg dark:prose-invert max-w-none cursor-text text-[20px] leading-relaxed"
+            className="prose prose-lg dark:prose-invert max-w-none cursor-text text-[20px] leading-relaxed whitespace-pre-wrap"
           >
-            <EntryContent content={entry.content} images={entry.images} />
+            {entry.content}
           </div>
         )}
 
