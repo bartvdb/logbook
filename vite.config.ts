@@ -8,12 +8,12 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icon.svg'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
       manifest: {
-        name: 'Personal Logbook',
-        short_name: 'Logbook',
-        description: 'Personal/Work journaling with AI mentorship',
-        theme_color: '#1f2937',
+        name: 'Clearspace',
+        short_name: 'Clearspace',
+        description: 'Personal journaling with AI mentorship',
+        theme_color: '#e86c4a',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait-primary',
@@ -21,10 +21,20 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/icon.svg',
+            src: '/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: '/icon-512.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
+            type: 'image/png'
+          },
+          {
+            src: '/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ]
       },
